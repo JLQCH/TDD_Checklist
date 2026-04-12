@@ -1,0 +1,2473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TDD Check">
+<meta name="theme-color" content="#0f1923">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<title>TDD Mantenimiento — Desaladora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── DARK MODE (default) ── */
+:root {
+  --bg: #0f1923;
+  --bg2: #16232f;
+  --bg3: #1d2f3e;
+  --bg4: #243547;
+  --border: rgba(120,180,220,0.12);
+  --border2: rgba(120,180,220,0.22);
+  --accent: #3eb8f0;
+  --accent2: #1a8fc4;
+  --text: #e8f4fb;
+  --text2: #8aacbe;
+  --text3: #4d7a96;
+  --ok: #27ae60;
+  --ok-bg: rgba(39,174,96,0.12);
+  --warn: #e67e22;
+  --warn-bg: rgba(230,126,34,0.12);
+  --danger: #e74c3c;
+  --danger-bg: rgba(231,76,60,0.12);
+  --header-bg: rgba(15,25,35,0.94);
+  --bottom-bg: rgba(15,25,35,0.96);
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --theme-transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+/* ── LIGHT MODE ── */
+body.light {
+  --bg: #f5f7fa;
+  --bg2: #ffffff;
+  --bg3: #eef1f5;
+  --bg4: #e2e7ef;
+  --border: rgba(30,80,130,0.10);
+  --border2: rgba(30,80,130,0.18);
+  --accent: #1a7fc4;
+  --accent2: #1260a0;
+  --text: #1a2634;
+  --text2: #4a6478;
+  --text3: #7a9ab0;
+  --ok: #1e8449;
+  --ok-bg: rgba(30,132,73,0.09);
+  --warn: #b7770d;
+  --warn-bg: rgba(183,119,13,0.09);
+  --danger: #c0392b;
+  --danger-bg: rgba(192,57,43,0.09);
+  --header-bg: rgba(245,247,250,0.96);
+  --bottom-bg: rgba(245,247,250,0.97);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 2000; padding: 32px 24px;
+  padding-top: calc(var(--safe-top) + 32px);
+}
+.login-logo { font-family: var(--font-head); font-size: 32px; font-weight: 700; color: var(--accent); letter-spacing: -1px; margin-bottom: 6px; }
+.login-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 48px; text-align: center; }
+.login-card {
+  width: 100%; max-width: 340px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 28px 24px;
+}
+.login-label { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+.login-input {
+  width: 100%; padding: 13px 14px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text);
+  font-family: var(--font-body); font-size: 16px;
+  outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none; margin-bottom: 16px;
+}
+.login-input:focus { border-color: var(--accent); }
+.login-input.error { border-color: var(--danger); animation: shake 0.35s ease; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)} 80%{transform:translateX(-4px)}
+}
+.login-btn {
+  width: 100%; padding: 14px;
+  background: var(--accent); border: none; border-radius: 10px;
+  color: var(--bg); font-family: var(--font-head); font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s; letter-spacing: 0.3px;
+}
+.login-btn:active { opacity: 0.85; transform: scale(0.98); }
+.login-error {
+  font-family: var(--font-mono); font-size: 11px; color: var(--danger);
+  text-align: center; margin-top: 12px; letter-spacing: 0.5px;
+  min-height: 16px; opacity: 0; transition: opacity 0.2s;
+}
+.login-error.visible { opacity: 1; }
+.login-attempts { font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-align: center; margin-top: 20px; letter-spacing: 0.5px; }
+
+/* ── SPLASH SCREEN ── */
+#splash {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  z-index: 1000; transition: opacity 0.4s;
+}
+#splash .logo { font-family: var(--font-head); font-size: 28px; font-weight: 700; color: var(--accent); letter-spacing: -1px; }
+#splash .sub { font-family: var(--font-mono); font-size: 11px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; }
+.splash-bar { width: 120px; height: 2px; background: var(--bg3); border-radius: 1px; overflow: hidden; margin-top: 8px; }
+.splash-fill { height: 100%; background: var(--accent); border-radius: 1px; animation: load 0.8s ease forwards; }
+@keyframes load { from { width: 0 } to { width: 100% } }
+
+/* ── HEADER ── */
+#header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-top) + 12px) 16px 12px;
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.app-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+.header-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+
+/* ── STATS BAR ── */
+.stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat { background: var(--bg3); border-radius: 8px; padding: 8px 6px; text-align: center; border: 1px solid var(--border); }
+.stat-val { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--text); line-height: 1; }
+.stat-val.ok { color: var(--ok); }
+.stat-val.danger { color: var(--danger); }
+.stat-val.accent { color: var(--accent); }
+.stat-lbl { font-family: var(--font-mono); font-size: 9px; color: var(--text3); margin-top: 3px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* ── PROGRESS ── */
+.progress-wrap { margin-bottom: 12px; }
+.progress-track { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 2px; transition: width 0.4s ease; }
+.maturity-row { display: flex; align-items: center; justify-content: space-between; }
+.maturity-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+.maturity-val { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--accent); }
+
+/* ── FILTER TABS ── */
+.filter-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.filter-tabs::-webkit-scrollbar { display: none; }
+.ftab {
+  flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; padding: 5px 12px; border-radius: 20px;
+  border: 1px solid var(--border2); background: transparent; color: var(--text2);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.ftab.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+
+/* ── MAIN CONTENT ── */
+#main { padding: 16px 16px calc(var(--safe-bottom) + 80px); }
+
+/* ── SECTION ── */
+.section { margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+.sec-header {
+  display: flex; align-items: center; gap: 10px; padding: 13px 14px;
+  background: var(--bg2); cursor: pointer; user-select: none;
+  transition: background 0.15s;
+}
+.sec-header:active { background: var(--bg3); }
+.sec-code { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 500; min-width: 18px; }
+.sec-title-wrap { flex: 1; }
+.sec-title { font-family: var(--font-head); font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.sec-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+.sec-badge {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+  padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+}
+.sb-default { background: var(--bg4); color: var(--text2); border: 1px solid var(--border2); }
+.sb-partial { background: rgba(62,184,240,0.12); color: var(--accent); border: 1px solid rgba(62,184,240,0.3); }
+.sb-ok { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(46,204,113,0.3); }
+.sb-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(231,76,60,0.3); }
+.sec-chevron { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+.sec-chevron.open { transform: rotate(90deg); }
+
+.sec-body { background: var(--bg); display: none; }
+.sec-body.open { display: block; }
+
+/* ── ITEM ── */
+.item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 14px; border-top: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s; position: relative;
+}
+.item:active { background: var(--bg3); }
+.item.st-ok { background: rgba(46,204,113,0.05); }
+.item.st-ok:active { background: rgba(46,204,113,0.1); }
+.item.st-flag { background: rgba(231,76,60,0.05); }
+.item.st-flag:active { background: rgba(231,76,60,0.1); }
+.item.st-skip { opacity: 0.45; }
+
+.cb-wrap { flex-shrink: 0; margin-top: 1px; }
+.cb {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1.5px solid var(--border2);
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; transition: all 0.15s;
+}
+.item.st-ok .cb { background: var(--ok); border-color: var(--ok); color: #fff; }
+.item.st-flag .cb { background: var(--danger); border-color: var(--danger); color: #fff; }
+.item.st-skip .cb { background: var(--bg4); border-color: var(--border); color: var(--text3); }
+
+.item-body { flex: 1; min-width: 0; }
+.item-text { font-family: var(--font-body); font-size: 13px; color: var(--text); line-height: 1.45; font-weight: 400; }
+.item.st-ok .item-text { color: var(--ok); }
+.item.st-flag .item-text { color: var(--danger); }
+.ctag {
+  display: inline-block; font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+  padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle;
+  background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(231,76,60,0.3);
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.item-sub { font-family: var(--font-body); font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.4; }
+.item-actions { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+.iact {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s;
+}
+.iact:active { transform: scale(0.96); }
+.iact.ok { border-color: rgba(46,204,113,0.4); color: var(--ok); }
+.iact.flag { border-color: rgba(231,76,60,0.4); color: var(--danger); }
+.iact.skip { border-color: var(--border); color: var(--text3); }
+
+.note-area {
+  display: none; width: 100%; margin-top: 8px;
+  font-family: var(--font-body); font-size: 12px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text); resize: none; min-height: 60px;
+  line-height: 1.5;
+}
+.note-area.visible { display: block; }
+.note-area::placeholder { color: var(--text3); }
+
+/* ── PHOTO STRIP ── */
+.photo-input { display: none; }
+.photo-strip {
+  display: none; flex-wrap: wrap; gap: 8px;
+  margin-top: 8px;
+}
+.photo-strip.visible { display: flex; }
+.photo-thumb-wrap {
+  position: relative; width: 80px; height: 80px; flex-shrink: 0;
+}
+.photo-thumb {
+  width: 80px; height: 80px; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--border2);
+  display: block; cursor: pointer;
+}
+.photo-del {
+  position: absolute; top: -6px; right: -6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--danger); border: 2px solid var(--bg);
+  color: #fff; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; line-height: 1;
+}
+.photo-add-btn {
+  width: 80px; height: 80px; border-radius: 8px;
+  border: 1.5px dashed var(--border2); background: var(--bg3);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; cursor: pointer; flex-shrink: 0; transition: border-color 0.15s;
+}
+.photo-add-btn:active { border-color: var(--accent); background: var(--bg4); }
+.photo-add-icon { font-size: 20px; line-height: 1; color: var(--text3); }
+.photo-add-lbl { font-family: var(--font-mono); font-size: 9px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* ── LIGHTBOX ── */
+#lightbox {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#lightbox.open { display: flex; }
+#lightbox img {
+  max-width: 100%; max-height: 85dvh; border-radius: 10px;
+  object-fit: contain;
+}
+#lightbox-close {
+  position: absolute; top: calc(var(--safe-top) + 16px); right: 16px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: none;
+  color: #fff; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+#lightbox-caption {
+  position: absolute; bottom: calc(var(--safe-bottom) + 20px); left: 0; right: 0;
+  text-align: center; font-family: var(--font-mono); font-size: 11px;
+  color: rgba(255,255,255,0.5); letter-spacing: 0.5px;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+.empty-state p { font-family: var(--font-mono); font-size: 12px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+
+/* ── BOTTOM ACTION BAR ── */
+#bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--bottom-bg);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 10px 16px calc(var(--safe-bottom) + 10px);
+  display: flex; gap: 8px;
+}
+.bar-btn {
+  flex: 1; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; padding: 10px 8px; border-radius: 10px;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text2); cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.bar-btn:active { transform: scale(0.97); }
+.bar-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+
+/* ── MODAL ── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  align-items: flex-end; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal {
+  width: 100%; max-width: 600px; background: var(--bg2);
+  border-radius: 20px 20px 0 0; border: 1px solid var(--border2);
+  border-bottom: none; padding: 20px 20px calc(var(--safe-bottom) + 20px);
+  max-height: 80dvh; overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.modal-section { margin-bottom: 16px; }
+.modal-label { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.finding-item { background: var(--danger-bg); border: 1px solid rgba(231,76,60,0.25); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; }
+.finding-code { font-family: var(--font-mono); font-size: 10px; color: var(--danger); margin-bottom: 3px; }
+.finding-text { font-family: var(--font-body); font-size: 12px; color: var(--text); line-height: 1.4; }
+.finding-note { font-family: var(--font-body); font-size: 11px; color: var(--text2); margin-top: 4px; font-style: italic; }
+.modal-close {
+  width: 100%; font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; padding: 12px; border-radius: 10px;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text2); cursor: pointer; margin-top: 8px;
+}
+.modal-pdf {
+  width: 100%; font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px;
+  text-transform: uppercase; padding: 12px; border-radius: 10px;
+  border: 1px solid rgba(62,184,240,0.4); background: rgba(62,184,240,0.1);
+  color: var(--accent); cursor: pointer; margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.modal-pdf:active { opacity: 0.8; transform: scale(0.98); }
+.modal-pdf.loading { opacity: 0.6; pointer-events: none; }
+.pdf-spinner {
+  width: 14px; height: 14px; border: 2px solid rgba(62,184,240,0.3);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.7s linear infinite; display: none;
+}
+.modal-pdf.loading .pdf-spinner { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SECTION PROGRESS BAR ── */
+.sec-progress { height: 2px; background: var(--bg3); }
+.sec-progress-fill { height: 100%; background: var(--accent2); transition: width 0.3s; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: calc(var(--safe-bottom) + 90px); left: 50%; transform: translateX(-50%) translateY(10px);
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 20px;
+  padding: 8px 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text2);
+  letter-spacing: 0.5px; opacity: 0; transition: all 0.25s; white-space: nowrap; z-index: 300;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── THEME TOGGLE ── */
+#theme-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--bg3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: var(--theme-transition), transform 0.15s;
+  flex-shrink: 0;
+}
+#theme-toggle:active { transform: scale(0.9); }
+#theme-toggle svg { width: 16px; height: 16px; transition: opacity 0.2s; }
+.icon-sun  { display: none; }
+.icon-moon { display: block; }
+body.light .icon-sun  { display: block; }
+body.light .icon-moon { display: none; }
+
+/* Light mode — misc overrides that can't be done with vars alone */
+body.light #splash { background: var(--bg); }
+body.light #modal  { background: var(--bg2); }
+body.light #modal-overlay { background: rgba(30,50,80,0.5); }
+body.light #lightbox { background: rgba(0,0,0,0.85); }
+body.light .sec-header { background: var(--bg2); }
+body.light .sec-header:active { background: var(--bg3); }
+body.light .sec-body { background: var(--bg); }
+body.light .item:hover { background: var(--bg3); }
+body.light .item.st-ok  { background: var(--ok-bg); }
+body.light .item.st-flag { background: var(--danger-bg); }
+body.light .login-card { background: var(--bg2); }
+body.light #login-screen { background: var(--bg); }
+body.light .note-area { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+body.light .photo-add-btn { background: var(--bg3); }
+body.light .photo-add-btn:active { background: var(--bg4); }
+body.light .ftab { color: var(--text2); }
+body.light .ftab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+body.light .stat { background: var(--bg3); }
+body.light .sc-progress { background: var(--bg3); }
+body.light .modal-close { background: var(--bg3); color: var(--text2); }
+body.light .finding-item { border-color: rgba(192,57,43,0.25); }
+body.light .bar-btn { background: var(--bg3); color: var(--text2); border-color: var(--border2); }
+body.light .bar-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+body.light .iact { color: var(--text2); }
+body.light .iact.ok { color: var(--ok); }
+body.light .iact.flag { color: var(--danger); }
+body.light .maturity-row .maturity-lbl { color: var(--text3); }
+
+/* Smooth transitions on theme switch */
+body, #header, #bottom-bar, .section, .item, .stat,
+.sec-header, .sec-body, .note-area, .bar-btn, .ftab,
+.finding-item, .modal-close, .login-card, #login-screen {
+  transition: background 0.25s, border-color 0.25s, color 0.2s;
+}
+
+/* ── DRAWER (shared: Drive, Gallery, Settings) ── */
+.drawer-overlay {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.drawer-overlay.open { display: block; }
+.drawer {
+  position: fixed; top: 0; right: -100%; bottom: 0; z-index: 401;
+  width: min(92vw, 420px); background: var(--bg2);
+  border-left: 1px solid var(--border2);
+  display: flex; flex-direction: column;
+  transition: right 0.32s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+.drawer.open { right: 0; }
+.drawer-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: calc(var(--safe-top) + 16px) 16px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.drawer-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--text); flex: 1; }
+.drawer-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text2); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+.drawer-section { margin-bottom: 20px; }
+.drawer-label {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text3);
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;
+}
+.drawer-btn {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text); font-family: var(--font-body); font-size: 13px;
+  cursor: pointer; text-align: left; display: flex; align-items: center; gap: 10px;
+  transition: background 0.15s; margin-bottom: 8px;
+}
+.drawer-btn:active { background: var(--bg4); }
+.drawer-btn.accent { background: rgba(62,184,240,0.12); border-color: rgba(62,184,240,0.35); color: var(--accent); }
+.drawer-btn.danger { background: var(--danger-bg); border-color: rgba(231,76,60,0.3); color: var(--danger); }
+.drawer-btn.ok    { background: var(--ok-bg); border-color: rgba(39,174,96,0.3); color: var(--ok); }
+.drawer-btn-icon { font-size: 16px; flex-shrink: 0; }
+.drawer-btn-body { flex: 1; }
+.drawer-btn-title { font-weight: 500; font-size: 13px; }
+.drawer-btn-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+.drawer-input {
+  width: 100%; padding: 11px 12px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text); font-family: var(--font-mono); font-size: 12px;
+  margin-bottom: 8px; outline: none;
+}
+.drawer-input:focus { border-color: var(--accent); }
+body.light .drawer-input { background: var(--bg3); }
+
+/* ── DRIVE COPY LIST ── */
+.copy-item {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+}
+.copy-name { font-family: var(--font-mono); font-size: 11px; color: var(--accent); margin-bottom: 4px; word-break: break-all; }
+.copy-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+.copy-actions { display: flex; gap: 6px; margin-top: 8px; }
+.copy-btn {
+  flex: 1; padding: 6px 10px; border-radius: 8px; font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+  border: 1px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer;
+}
+.copy-btn.load { border-color: rgba(62,184,240,0.4); color: var(--accent); }
+.copy-btn.del  { border-color: rgba(231,76,60,0.3); color: var(--danger); }
+.drive-status {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-radius: 8px; font-family: var(--font-mono); font-size: 11px;
+  margin-bottom: 12px;
+}
+.drive-status.connected { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(39,174,96,0.3); }
+.drive-status.disconnected { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(231,76,60,0.3); }
+.drive-status.loading { background: rgba(62,184,240,0.1); color: var(--accent); border: 1px solid rgba(62,184,240,0.3); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── GALLERY ── */
+.gallery-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  margin-bottom: 12px;
+}
+.gallery-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; cursor: pointer;
+}
+.gallery-card:active { opacity: 0.85; }
+.gallery-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.gallery-card-body { padding: 8px 10px; }
+.gallery-card-title { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; line-height: 1.3; }
+.gallery-card-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+.gallery-card-ai { font-family: var(--font-body); font-size: 11px; color: var(--text2); margin-top: 4px; line-height: 1.4; }
+.gallery-add-card {
+  background: var(--bg3); border: 1.5px dashed var(--border2);
+  border-radius: 10px; aspect-ratio: 4/3; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; cursor: pointer; transition: border-color 0.15s;
+}
+.gallery-add-card:active { border-color: var(--accent); }
+.gallery-add-icon { font-size: 28px; color: var(--text3); }
+.gallery-add-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── AI ANALYSIS PANEL ── */
+.ai-result {
+  background: rgba(62,184,240,0.07); border: 1px solid rgba(62,184,240,0.2);
+  border-radius: 10px; padding: 12px; margin-top: 10px;
+}
+.ai-result-title { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.ai-result-text { font-family: var(--font-body); font-size: 13px; color: var(--text); line-height: 1.6; }
+.ai-spinner-wrap { display: flex; align-items: center; gap: 10px; padding: 12px; }
+.ai-spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+/* ── SETTINGS ── */
+.settings-group { margin-bottom: 20px; }
+.settings-group-title { font-family: var(--font-mono); font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.api-key-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+.api-key-row .drawer-input { flex: 1; margin-bottom: 0; font-size: 11px; }
+.api-save-btn {
+  padding: 11px 12px; border-radius: 8px; border: 1px solid rgba(62,184,240,0.4);
+  background: rgba(62,184,240,0.1); color: var(--accent); font-family: var(--font-mono);
+  font-size: 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+.api-provider-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.api-tab {
+  flex: 1; padding: 6px 4px; border-radius: 8px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); font-family: var(--font-mono);
+  font-size: 10px; text-align: center; cursor: pointer; transition: all 0.15s;
+}
+.api-tab.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+.api-status-badge {
+  display: inline-block; font-family: var(--font-mono); font-size: 9px;
+  padding: 2px 6px; border-radius: 20px; margin-left: 6px; vertical-align: middle;
+}
+.api-status-badge.set { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(39,174,96,0.3); }
+.api-status-badge.unset { background: var(--bg4); color: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-logo">TDD Check</div>
+  <div class="login-sub">Mantenimiento · Desaladora</div>
+  <div class="login-card">
+    <label class="login-label" for="login-user">Usuario</label>
+    <input class="login-input" type="text" id="login-user" autocomplete="username"
+      autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="usuario">
+    <label class="login-label" for="login-pass">Contraseña</label>
+    <input class="login-input" type="password" id="login-pass" autocomplete="current-password"
+      placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Acceder</button>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+    <div class="login-attempts" id="login-attempts"></div>
+  </div>
+</div>
+
+<!-- Splash -->
+<div id="splash">
+  <div class="logo">TDD Check</div>
+  <div class="sub">Mantenimiento · Desaladora</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- Header -->
+<div id="header">
+  <div class="header-top">
+    <div class="app-title">TDD Check</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="header-meta" id="header-date"></div>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar modo día/noche">
+        <!-- Moon icon (shown in dark mode) -->
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text2)">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+        </svg>
+        <!-- Sun icon (shown in light mode) -->
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text2)">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val accent" id="sv-total">0</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-val ok" id="sv-ok">0</div><div class="stat-lbl">Conforme</div></div>
+    <div class="stat"><div class="stat-val danger" id="sv-flag">0</div><div class="stat-lbl">Hallazgo</div></div>
+    <div class="stat"><div class="stat-val" id="sv-pct">0%</div><div class="stat-lbl">Completado</div></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="maturity-row">
+      <div class="maturity-lbl">Madurez CMMS</div>
+      <div class="maturity-val" id="mat-val">— Sin evaluar</div>
+    </div>
+  </div>
+  <div class="filter-tabs">
+    <button class="ftab active" onclick="setFilter('all',this)">Todos</button>
+    <button class="ftab" onclick="setFilter('none',this)">Pendientes</button>
+    <button class="ftab" onclick="setFilter('ok',this)">Conforme</button>
+    <button class="ftab" onclick="setFilter('flag',this)">Hallazgos</button>
+    <button class="ftab" onclick="setFilter('critical',this)">Críticos</button>
+    <button class="ftab" onclick="expandAll()">↕ Todo</button>
+    <button class="ftab" onclick="resetAll()">↺ Reset</button>
+  </div>
+</div>
+
+<div id="main"></div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- Bottom bar -->
+<div id="bottom-bar">
+  <button class="bar-btn" onclick="openDrawer('drive')" title="Sincronizar con Drive">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><path d="M22 12s-4-6-10-6S2 12 2 12s4 6 10 6 10-6 10-6z"/><circle cx="12" cy="12" r="3"/></svg>
+    Drive
+  </button>
+  <button class="bar-btn" onclick="openDrawer('gallery')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    Fotos
+  </button>
+  <button class="bar-btn" onclick="openDrawer('settings')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Config
+  </button>
+  <button class="bar-btn primary" onclick="openReport()">Informe ↑</button>
+</div>
+
+<!-- ══ DRIVE DRAWER ══ -->
+<div class="drawer-overlay" id="drive-overlay" onclick="closeDrawer('drive')"></div>
+<div class="drawer" id="drive-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Sincronización Drive</div>
+    <button class="drawer-close" onclick="closeDrawer('drive')">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div id="drive-status" class="drive-status disconnected">
+        <div class="status-dot"></div>
+        <span id="drive-status-text">No conectado</span>
+      </div>
+      <button class="drawer-btn accent" id="drive-auth-btn" onclick="driveAuth()">
+        <span class="drawer-btn-icon">🔑</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Conectar con Google</div>
+          <div class="drawer-btn-sub">Autorizar acceso a Drive</div>
+        </div>
+      </button>
+      <button class="drawer-btn" id="drive-disconnect-btn" onclick="driveDisconnect()" style="display:none">
+        <span class="drawer-btn-icon">🔌</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Desconectar cuenta</div>
+          <div class="drawer-btn-sub" id="drive-user-email">—</div>
+        </div>
+      </button>
+    </div>
+    <div class="drawer-section" id="drive-save-section" style="display:none">
+      <div class="drawer-label">Guardar copia en Drive</div>
+      <button class="drawer-btn ok" onclick="driveSave()">
+        <span class="drawer-btn-icon">💾</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Guardar copia ahora</div>
+          <div class="drawer-btn-sub" id="drive-save-name">TDD_[dispositivo]_[fecha]_[hora].json</div>
+        </div>
+      </button>
+    </div>
+    <div class="drawer-section" id="drive-copies-section" style="display:none">
+      <div class="drawer-label">Copias guardadas <span id="drive-copies-count"></span></div>
+      <button class="drawer-btn" onclick="driveListCopies()" style="margin-bottom:10px">
+        <span class="drawer-btn-icon">🔄</span>
+        <div class="drawer-btn-body"><div class="drawer-btn-title">Actualizar lista</div></div>
+      </button>
+      <div id="drive-copies-list"><div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Pulsa actualizar para cargar copias</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GALLERY DRAWER ══ -->
+<div class="drawer-overlay" id="gallery-overlay" onclick="closeDrawer('gallery')"></div>
+<div class="drawer" id="gallery-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Galería fotográfica</div>
+    <button class="drawer-close" onclick="closeDrawer('gallery')">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-label">Nueva fotografía</div>
+      <button class="drawer-btn accent" onclick="galleryTakePhoto()">
+        <span class="drawer-btn-icon">📷</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Tomar fotografía</div>
+          <div class="drawer-btn-sub">Cámara trasera · Análisis IA disponible</div>
+        </div>
+      </button>
+      <input type="file" accept="image/*" capture="environment" id="gallery-input" style="display:none" onchange="galleryHandlePhoto(this)">
+    </div>
+    <!-- AI analysis panel (shown after taking a photo) -->
+    <div id="gallery-analysis-panel" style="display:none">
+      <div class="drawer-section">
+        <div class="drawer-label">Fotografía capturada</div>
+        <img id="gallery-preview" style="width:100%;border-radius:10px;margin-bottom:10px;border:1px solid var(--border2)" src="" alt="">
+        <input class="drawer-input" type="text" id="gallery-photo-title" placeholder="Título o descripción (opcional)">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button class="drawer-btn accent" style="flex:1" onclick="galleryAnalyzeAI()">
+            <span class="drawer-btn-icon">🤖</span>
+            <div class="drawer-btn-body"><div class="drawer-btn-title">Analizar con IA</div></div>
+          </button>
+          <button class="drawer-btn ok" style="flex:1" onclick="gallerySavePhoto()">
+            <span class="drawer-btn-icon">✓</span>
+            <div class="drawer-btn-body"><div class="drawer-btn-title">Guardar foto</div></div>
+          </button>
+        </div>
+        <button class="drawer-btn danger" onclick="galleryCancelPhoto()">
+          <span class="drawer-btn-icon">✕</span>
+          <div class="drawer-btn-body"><div class="drawer-btn-title">Descartar</div></div>
+        </button>
+        <div id="gallery-ai-result" style="display:none">
+          <div class="ai-result">
+            <div class="ai-result-title">Análisis IA</div>
+            <div class="ai-result-text" id="gallery-ai-text"></div>
+          </div>
+        </div>
+        <div id="gallery-ai-loading" style="display:none">
+          <div class="ai-spinner-wrap"><div class="ai-spinner"></div><span style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">Analizando imagen…</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- Gallery grid -->
+    <div class="drawer-section">
+      <div class="drawer-label">Anexo fotográfico (<span id="gallery-count">0</span> fotos)</div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Gallery lightbox -->
+<div id="gallery-lightbox" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.93);flex-direction:column;align-items:center;justify-content:center" onclick="closeGalleryLightbox()">
+  <button style="position:absolute;top:calc(var(--safe-top)+14px);right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;cursor:pointer;z-index:1" onclick="closeGalleryLightbox()">✕</button>
+  <img id="gallery-lightbox-img" style="max-width:96%;max-height:70dvh;border-radius:10px;object-fit:contain" src="" alt="">
+  <div id="gallery-lightbox-info" style="padding:16px 20px;max-width:92%;width:100%">
+    <div id="gallery-lightbox-title" style="font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff;margin-bottom:6px"></div>
+    <div id="gallery-lightbox-ai" style="font-family:var(--font-body);font-size:13px;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:12px"></div>
+    <div id="gallery-lightbox-meta" style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.4)"></div>
+    <button id="gallery-lightbox-del" style="margin-top:12px;width:100%;padding:10px;border-radius:8px;border:1px solid rgba(231,76,60,0.5);background:rgba(231,76,60,0.1);color:#e74c3c;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Eliminar foto</button>
+  </div>
+</div>
+
+<!-- ══ SETTINGS DRAWER ══ -->
+<div class="drawer-overlay" id="settings-overlay" onclick="closeDrawer('settings')"></div>
+<div class="drawer" id="settings-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Configuración</div>
+    <button class="drawer-close" onclick="closeDrawer('settings')">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="settings-group">
+      <div class="settings-group-title">API de inteligencia artificial</div>
+      <div class="api-provider-tabs">
+        <button class="api-tab active" onclick="setApiTab('claude',this)">Claude</button>
+        <button class="api-tab" onclick="setApiTab('gemini',this)">Gemini</button>
+        <button class="api-tab" onclick="setApiTab('openai',this)">ChatGPT</button>
+      </div>
+      <div id="api-panel-claude">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px">
+          Anthropic Claude · api.anthropic.com
+          <span class="api-status-badge" id="badge-claude">No configurado</span>
+        </div>
+        <div class="api-key-row">
+          <input class="drawer-input" type="password" id="key-claude" placeholder="sk-ant-api03-..." autocomplete="off">
+          <button class="api-save-btn" onclick="saveApiKey('claude')">Guardar</button>
+        </div>
+        <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
+          Modelo: claude-opus-4-5 · Análisis detallado de imágenes industriales, placas de características, detección de daños.
+        </div>
+      </div>
+      <div id="api-panel-gemini" style="display:none">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px">
+          Google Gemini · generativelanguage.googleapis.com
+          <span class="api-status-badge" id="badge-gemini">No configurado</span>
+        </div>
+        <div class="api-key-row">
+          <input class="drawer-input" type="password" id="key-gemini" placeholder="AIza..." autocomplete="off">
+          <button class="api-save-btn" onclick="saveApiKey('gemini')">Guardar</button>
+        </div>
+        <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
+          Modelo: gemini-2.0-flash · Análisis rápido de imágenes.
+        </div>
+      </div>
+      <div id="api-panel-openai" style="display:none">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px">
+          OpenAI GPT-4o · api.openai.com
+          <span class="api-status-badge" id="badge-openai">No configurado</span>
+        </div>
+        <div class="api-key-row">
+          <input class="drawer-input" type="password" id="key-openai" placeholder="sk-proj-..." autocomplete="off">
+          <button class="api-save-btn" onclick="saveApiKey('openai')">Guardar</button>
+        </div>
+        <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
+          Modelo: gpt-4o · Análisis visual avanzado.
+        </div>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Sesión y datos</div>
+      <button class="drawer-btn danger" onclick="if(confirm('¿Cerrar sesión?')){sessionStorage.clear();location.reload()}">
+        <span class="drawer-btn-icon">🚪</span>
+        <div class="drawer-btn-body"><div class="drawer-btn-title">Cerrar sesión</div></div>
+      </button>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Acceso</div>
+      <div class="drawer-label" style="margin-bottom:6px">Cambiar credenciales de acceso</div>
+      <input class="drawer-input" type="text" id="new-user" placeholder="Nuevo usuario" autocorrect="off" autocapitalize="none">
+      <input class="drawer-input" type="password" id="new-pass" placeholder="Nueva contraseña">
+      <button class="drawer-btn accent" onclick="saveCredentials()">
+        <span class="drawer-btn-icon">🔒</span>
+        <div class="drawer-btn-body"><div class="drawer-btn-title">Actualizar credenciales</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Report modal -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Resumen de hallazgos</div>
+    <div id="modal-content"></div>
+    <button class="modal-pdf" id="pdf-btn" onclick="exportPDF()">
+      <div class="pdf-spinner"></div>
+      <span id="pdf-btn-text">Exportar PDF completo</span>
+    </button>
+    <button class="modal-close" onclick="closeModalDirect()">Cerrar</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const SECTIONS = [
+{id:'ORG',title:'Organización y RRHH',sub:'Estructura · Competencias · Dependencias',items:[
+  {id:'ORG-A1',t:'Organigrama actualizado del departamento de mantenimiento',s:'Solicitar versión firmada y fechada',c:1},
+  {id:'ORG-A2',t:'Definición formal de roles y responsabilidades (RACI)',s:'¿Existe documento de funciones por puesto?'},
+  {id:'ORG-A3',t:'Ratio personal propio vs. contratado (% externalización)',s:'Nóminas + contratos de servicio activos'},
+  {id:'ORG-A4',t:'Cobertura de guardias: 24/7 real o solo localización',s:'Cuadrante de turnos + tiempos de respuesta documentados',c:1},
+  {id:'ORG-A5',t:'Tiempo de respuesta a emergencia garantizado',s:'Verificar casos reales en historial de OTs urgentes'},
+  {id:'ORG-B1',t:'Inventario de certificaciones: trabajos en tensión, presión, altura',s:'Registros individuales de formación',c:1},
+  {id:'ORG-B2',t:'Personal habilitado para espacios confinados',s:'Lista nominativa + certificados vigentes',c:1},
+  {id:'ORG-B3',t:'Técnicos especializados en membranas OI (formación OEM)',s:'Certificados de formación de fabricante',c:1},
+  {id:'ORG-B4',t:'Matriz de polivalencia del personal técnico',s:'¿Mecánicos pueden hacer instrumentación básica?'},
+  {id:'ORG-B5',t:'Plan de formación anual con presupuesto asignado',s:'Plan formativo + evidencia de ejecución'},
+  {id:'ORG-C1',t:'Posiciones críticas con know-how no documentado',s:'Entrevistar al Jefe de Mantenimiento sobre quién es insustituible',c:1},
+  {id:'ORG-C2',t:'Plan de sucesión para el Jefe de Mantenimiento',s:'¿Existe sustituto designado y formado?',c:1},
+  {id:'ORG-C3',t:'Técnico único para equipos específicos (SCADA, membranas)',s:'Riesgo alto si una sola persona gestiona sistemas críticos',c:1},
+  {id:'ORG-C4',t:'Rotación histórica del personal técnico (últimos 3 años)',s:'Rotación >20% anual indica problemas de clima o retribución'},
+  {id:'ORG-D1',t:'Proceso formal de priorización de OTs entre mantenimiento y operaciones',s:'Sin proceso → las urgentes siempre ganan al preventivo'},
+  {id:'ORG-D2',t:'¿Quién autoriza la parada de un equipo para mantenimiento?',s:'Ambigüedad en autorización = riesgo de accidente',c:1},
+]},
+{id:'CON',title:'Contratas y subcontratas',sub:'Contratos · Desempeño · Legal',items:[
+  {id:'CON-A1',t:'Listado completo de contratos de mantenimiento activos',s:'Alcance, duración, importe anual y fecha de vencimiento',c:1},
+  {id:'CON-A2',t:'Contratos con SLA: disponibilidad garantizada, tiempo de respuesta, penalizaciones',s:'Leer cláusulas de penalización y verificar si se han aplicado',c:1},
+  {id:'CON-A3',t:'Contratos OEM en vigor para equipos críticos (membranas, ERD, bombas AP)',s:'¿Están en garantía? ¿Quién asume el coste de piezas?',c:1},
+  {id:'CON-A4',t:'Contratos próximos a vencer en los próximos 12 meses',s:'Riesgo de vacío de cobertura o renegociación desfavorable'},
+  {id:'CON-B1',t:'Sistema de evaluación periódica de proveedores',s:'Solicitar últimas evaluaciones de las 3 contratas principales'},
+  {id:'CON-B2',t:'Dependencia crítica de un único proveedor (single-source risk)',s:'Si >40% del mantenimiento recae en una empresa = riesgo alto',c:1},
+  {id:'CON-B3',t:'Historial de incumplimientos y penalizaciones aplicadas',s:'Registro de no conformidades con proveedores'},
+  {id:'CON-C1',t:'Seguros y responsabilidad civil de todas las contratas vigentes',s:'Pólizas vigentes + certificados de cobertura',c:1},
+  {id:'CON-C2',t:'Verificación fiscal y laboral de contratas (AEAT y SS al corriente)',s:'Certificados de estar al corriente',c:1},
+  {id:'CON-C3',t:'Sistema PTW para empresas externas implantado',s:'¿Existe proceso formal? ¿Quién emite y valida?',c:1},
+  {id:'CON-C4',t:'Garantías de equipos: alcance, exclusiones y gestión de reclamaciones',s:'Listado de garantías vigentes con fechas de vencimiento'},
+]},
+{id:'EQP',title:'Instalaciones y equipos críticos',sub:'Proceso · Eléctrico · Civil',items:[
+  {id:'EQP-A1',t:'Membranas OI: presión diferencial, tasa de rechazo, SDI alimentación',s:'Rechazo <97% o SDI >5 = degradación significativa',c:1},
+  {id:'EQP-A2',t:'Antigüedad de membranas y ciclos de limpieza CIP realizados',s:'Vida útil media 5-7 años; >8 años sin cambio = riesgo',c:1},
+  {id:'EQP-A3',t:'Recuperadores de energía (ERD): rendimiento real vs. garantizado',s:'Pérdida >3 puntos porcentuales sobre diseño = revisión necesaria',c:1},
+  {id:'EQP-A4',t:'Bombas AP: curvas actuales vs. originales, análisis de vibraciones',s:'Eficiencia <90% del diseño = desgaste de rodetes',c:1},
+  {id:'EQP-A5',t:'Pretratamiento: filtros, UF/MF, dosificación, integridad',s:'Estado de membranas UF, frecuencia de backwash'},
+  {id:'EQP-A6',t:'Sistema CIP: disponibilidad, productos, eficacia documentada',s:'Verificar registros de las últimas 5 limpiezas'},
+  {id:'EQP-A7',t:'Ratio de recuperación real vs. diseño (% agua producto)',s:'Desviación >2 puntos indica degradación o fugas',c:1},
+  {id:'EQP-A8',t:'Postratatamiento: remineralización, desinfección, pH',s:'Calibración de instrumentación analítica'},
+  {id:'EQP-B1',t:'Subestación MT: transformadores, celdas, última termografía',s:'Última inspección termográfica y protocolo',c:1},
+  {id:'EQP-B2',t:'SAIs y grupos electrógenos: pruebas bajo carga, autonomía',s:'Registro de últimas pruebas bajo carga real',c:1},
+  {id:'EQP-B3',t:'Cumplimiento REBT: última inspección OCA de instalaciones eléctricas',s:'Certificado vigente con fecha de próxima inspección',c:1},
+  {id:'EQP-C1',t:'Tuberías de agua de mar y concentrado: corrosión exterior',s:'Programa de inspección CUI en ambiente marino',c:1},
+  {id:'EQP-C2',t:'Recipientes a presión: inspecciones OCA al día, libro de registro',s:'Solicitar libro de registro de cada recipiente',c:1},
+  {id:'EQP-C3',t:'Grúas y polipastos: ITV al día, cargas máximas marcadas',s:'Certificados de inspección periódica vigentes',c:1},
+]},
+{id:'ALM',title:'Almacenes y repuestos',sub:'Stock · Críticos · Químicos',items:[
+  {id:'ALM-A1',t:'Inventario físico realizado en los últimos 12 meses',s:'Sin inventario reciente los datos del sistema no son fiables',c:1},
+  {id:'ALM-A2',t:'Diferencia inventario físico vs. registro en sistema',s:'Diferencias >5% en valor o >10% en referencias = hallazgo',c:1},
+  {id:'ALM-A3',t:'Clasificación de repuestos: críticos, alta rotación, obsoletos',s:'¿Existe lista de repuestos críticos formalmente definida?',c:1},
+  {id:'ALM-B1',t:'Stock de membranas OI de repuesto (mínimo 5-10% del parque)',s:'Sin stock: cualquier membrana dañada para producción',c:1},
+  {id:'ALM-B2',t:'Repuestos bombas AP: rodetes, sellos mecánicos, rodamientos',s:'Lead time de rodetes puede ser 16-24 semanas',c:1},
+  {id:'ALM-B3',t:'Repuestos ERD: rotores, sellos (Energy Recovery, Danfoss)',s:'Fabricantes con stocks limitados; verificar disponibilidad',c:1},
+  {id:'ALM-B4',t:'Variadores de frecuencia de repuesto para bombas críticas',s:'Lead times >12 semanas para modelos específicos',c:1},
+  {id:'ALM-B5',t:'Gestión de obsolescencia: repuestos de equipos descatalogados',s:'Identificar equipos sin repuesto disponible en mercado',c:1},
+  {id:'ALM-C1',t:'FDS actualizadas y accesibles para todo el personal',s:'Obligatorio; verificar fecha de revisión',c:1},
+  {id:'ALM-C2',t:'Separación de productos incompatibles (ácidos/bases, oxidantes)',s:'Inspección visual del almacén químico',c:1},
+  {id:'ALM-C3',t:'Cubetos de retención con capacidad suficiente (100% mayor recipiente)',s:'Verificar con cálculo rápido en inspección',c:1},
+]},
+{id:'CMM',title:'CMMS y gestión de datos',sub:'Sistema · Adopción · Integración',items:[
+  {id:'CMM-A1',t:'CMMS implantado: plataforma, versión y módulos activos',s:'SAP PM, Maximo, Infor EAM, eMaint...',c:1},
+  {id:'CMM-A2',t:'Contrato de soporte del proveedor vigente',s:'Sin soporte activo, cualquier fallo crítico queda sin solución',c:1},
+  {id:'CMM-A3',t:'Política de backup verificada (frecuencia + test de restauración)',s:'¿Cuándo fue el último test de restauración exitoso?',c:1},
+  {id:'CMM-B1',t:'% OTs registradas en CMMS vs. trabajos ejecutados realmente',s:'Entrevistar 3-4 técnicos de campo: ¿usan el sistema o papel?',c:1},
+  {id:'CMM-B2',t:'OTs cerradas con datos reales: tiempo, materiales, causa raíz',s:'Revisar muestra de 20 OTs del último trimestre',c:1},
+  {id:'CMM-C1',t:'Jerarquía de activos completa (Planta > Sistema > Equipo)',s:'ISO 14224 como referencia; solicitar export del árbol',c:1},
+  {id:'CMM-C2',t:'% activos físicos registrados en CMMS (mínimo 70%)',s:'<70% registrado = hallazgo crítico',c:1},
+  {id:'CMM-C3',t:'Alineación TAG del CMMS con P&IDs y codificación de proceso',s:'Cruzar 10-15 equipos aleatorios CMMS ↔ P&ID',c:1},
+  {id:'CMM-D1',t:'Flujo completo OT: apertura → asignación → ejecución → cierre',s:'¿Existe aprobación de supervisor antes del cierre?',c:1},
+  {id:'CMM-D2',t:'Backlog de OTs abiertas: cantidad y antigüedad (WO aging)',s:'Backlog >60 días de trabajo acumulado = sobrecarga',c:1},
+  {id:'CMM-E1',t:'% equipos con plan preventivo cargado y activo en CMMS',s:'Asset register sin preventivo = plan inexistente',c:1},
+  {id:'CMM-E2',t:'Cumplimiento plan preventivo: % OTs ejecutadas en plazo',s:'Benchmark: >85%; caídas bruscas = señal de crisis'},
+  {id:'CMM-F1',t:'Módulo de almacén activo y alineado con inventario físico',s:'Spot-check de 15-20 referencias críticas',c:1},
+  {id:'CMM-G1',t:'Integración CMMS ↔ SCADA: horas de funcionamiento automáticas',s:'Sin integración, preventivo por horas es manual y poco fiable',c:1},
+  {id:'CMM-H1',t:'Cuadro de mando de mantenimiento generado desde CMMS',s:'Si los KPIs se calculan en Excel, el CMMS no se explota',c:1},
+  {id:'CMM-H2',t:'MTBF y MTTR calculados por equipo (últimos 24 meses)',s:'Solicitar valores de los 10 equipos más críticos'},
+]},
+{id:'DOC',title:'Procedimientos y documentación',sub:'P&IDs · Gamas · Normativa',items:[
+  {id:'DOC-A1',t:'P&IDs actualizados (as-built): fecha de última revisión',s:'P&ID >3 años sin revisar en planta activa = hallazgo',c:1},
+  {id:'DOC-A2',t:'Planos eléctricos unilineales actualizados',s:'Sin planos actualizados, las intervenciones eléctricas son un riesgo',c:1},
+  {id:'DOC-A3',t:'Gestión de cambios (MOC): proceso formal para modificaciones',s:'Sin MOC, los cambios crean P&IDs desactualizados',c:1},
+  {id:'DOC-B1',t:'Manuales OEM para todos los equipos principales',s:'Verificar para los 10 equipos más críticos',c:1},
+  {id:'DOC-B2',t:'Procedimientos de arranque y parada de planta',s:'¿Escritos, aprobados y conocidos por los operadores?',c:1},
+  {id:'DOC-C1',t:'Gamas de mantenimiento (procedimientos paso a paso) para equipos críticos',s:'Sin gama escrita, la calidad depende del técnico',c:1},
+  {id:'DOC-C2',t:'Procedimientos LOTO implantados y conocidos',s:'Verificar con pregunta directa a técnicos de campo',c:1},
+  {id:'DOC-C3',t:'Procedimientos de espacios confinados y trabajos en altura',s:'Existencia de permisos tipo y registros de aplicación',c:1},
+  {id:'DOC-D1',t:'Recipientes a presión: inspecciones OCA al día (libro de registro)',s:'Próximas fechas de inspección reglamentaria',c:1},
+  {id:'DOC-D2',t:'Certificados eléctricos REBT: última inspección OCA',s:'Período máximo entre inspecciones: 5 años en industria',c:1},
+  {id:'DOC-D3',t:'Autorización ambiental integrada: condiciones de vertido salmuera',s:'¿Se cumplen los límites? ¿Hay histórico de analíticas?',c:1},
+]},
+{id:'PRL',title:'PRL, Seguridad y Medio Ambiente',sub:'Riesgo · Accidentabilidad · Permisos',items:[
+  {id:'PRL-A1',t:'Evaluaciones de riesgo por puesto actualizadas',s:'Fecha de última revisión; deben actualizarse ante cambios',c:1},
+  {id:'PRL-A2',t:'Vigilancia de la salud: reconocimientos médicos y aptitudes firmadas',s:'Obligatorio para altura, confinados y exposición a químicos',c:1},
+  {id:'PRL-A3',t:'Formación PRL del personal propio y contratas (CAE)',s:'Registros de formación y fichas CAE de todas las contratas',c:1},
+  {id:'PRL-B1',t:'Índice de frecuencia (IF) y gravedad (IG) últimos 3 años',s:'IF >10 en industria química = nivel elevado',c:1},
+  {id:'PRL-B2',t:'Accidentes graves o muy graves en los últimos 5 años',s:'Cualquier accidente grave es hallazgo crítico con implicaciones legales',c:1},
+  {id:'PRL-B3',t:'Registro de near-miss: ¿existe y se usa?',s:'Sin near-miss, la cultura preventiva es reactiva'},
+  {id:'PRL-B4',t:'Investigaciones de accidentes con acciones correctoras cerradas',s:'Verificar que las acciones se han implementado realmente'},
+  {id:'PRL-C1',t:'Sistema PTW implantado con todos los tipos de permiso',s:'Permisos de la última semana; ¿quién emite y valida?',c:1},
+  {id:'PRL-C2',t:'PTW aplicado a personal de contratas',s:'Las contratas son la principal causa de accidentes en planta',c:1},
+  {id:'PRL-D1',t:'Gestión de concentrado (salmuera): condiciones AAI y analíticas',s:'Límites de vertido; verificar últimas 6 analíticas',c:1},
+  {id:'PRL-D2',t:'Gestión de residuos peligrosos: aceites, filtros, envases químicos',s:'Contrato con gestor autorizado, libro de residuos',c:1},
+  {id:'PRL-E1',t:'Plan de emergencia: simulacros realizados en 12 meses',s:'Al menos 1 simulacro por año; verificar registro',c:1},
+  {id:'PRL-E2',t:'Plan de respuesta ante contaminación del agua producto',s:'¿Existe protocolo de detención y notificación a autoridad sanitaria?',c:1},
+]},
+{id:'KPI',title:'KPIs y reporting',sub:'Disponibilidad · Costes · Proceso',items:[
+  {id:'KPI-A1',t:'Disponibilidad de planta histórica últimos 5 años',s:'>95% estándar en plantas bien gestionadas; <90% = hallazgo',c:1},
+  {id:'KPI-A2',t:'Desglose de indisponibilidad: correctivo, preventivo, causa externa',s:'¿Qué sistemas concentran las paradas no programadas?',c:1},
+  {id:'KPI-A3',t:'MTBF y MTTR por equipo crítico (últimos 24 meses)',s:'Solicitar para membranas, bombas AP y ERD'},
+  {id:'KPI-A4',t:'Causa raíz de las 5 paradas más largas de los últimos 3 años',s:'Solicitar informes con acciones correctoras',c:1},
+  {id:'KPI-B1',t:'% preventivo vs. correctivo (por horas de trabajo)',s:'>60% preventivo saludable; <40% = mantenimiento reactivo',c:1},
+  {id:'KPI-B2',t:'Coste de mantenimiento por m³ producido (€/m³)',s:'Rango típico: 0,05-0,15 €/m³ según tecnología y antigüedad',c:1},
+  {id:'KPI-B3',t:'RAV ratio: coste mantenimiento / valor de reposición activos',s:'Referencia industria: 2-4% para plantas desaladoras maduras'},
+  {id:'KPI-B4',t:'Evolución del coste de mantenimiento últimos 5 años',s:'Crecimiento sostenido >5% anual sin justificación = hallazgo'},
+  {id:'KPI-C1',t:'Consumo específico de energía (kWh/m³): real vs. diseño',s:'Desviación >10% sobre diseño sin justificación = ineficiencia',c:1},
+  {id:'KPI-C2',t:'Rendimiento ERD: % real vs. garantía contractual',s:'Degradación >3 puntos activa reclamación',c:1},
+  {id:'KPI-C3',t:'Tasa de rechazo de membranas: tendencia en 12 meses',s:'Descenso continuo indica fouling, scaling o daño físico',c:1},
+  {id:'KPI-C4',t:'SDI en alimentación a membranas: tendencia',s:'SDI >3 sostenido indica problema en pretratamiento'},
+  {id:'KPI-C5',t:'Calidad del agua producto: conductividad, pH',s:'Verificar cumplimiento con especificaciones de contrato',c:1},
+  {id:'KPI-D1',t:'Informe mensual de mantenimiento presentado a dirección',s:'Solicitar últimos 6 informes'},
+]},
+{id:'PMP',title:'Plan preventivo y predictivo',sub:'Metodología · Predictivo · Overhaul',items:[
+  {id:'PMP-A1',t:'Cobertura del plan: % equipos con preventivo programado',s:'<80% con preventivo = plan incompleto',c:1},
+  {id:'PMP-A2',t:'Metodología base: RCM, FMEA, OEM o experiencia',s:'Solicitar justificación para los 10 equipos más críticos'},
+  {id:'PMP-A3',t:'Cumplimiento del plan: % OTs preventivas ejecutadas en plazo',s:'<70% de cumplimiento es señal de sobrecarga',c:1},
+  {id:'PMP-A4',t:'Inspecciones reglamentarias (OCA) integradas con trazabilidad',s:'Prioridad máxima; resultado documental adjunto',c:1},
+  {id:'PMP-B1',t:'Análisis de vibraciones en bombas AP y otros rotativos críticos',s:'¿Interno o externalizado? Frecuencia y software',c:1},
+  {id:'PMP-B2',t:'Termografía infrarroja: cuadros eléctricos, conexiones MT/BT',s:'Anual como mínimo; solicitar últimos 2 informes'},
+  {id:'PMP-B3',t:'Seguimiento de parámetros de proceso como predictivo (ΔP membranas, corrientes)',s:'Es el predictivo más valioso en desaladoras; ¿con tendencias automáticas?',c:1},
+  {id:'PMP-B4',t:'Integración datos predictivos con CMMS: generación automática de OTs',s:'Sin integración, el predictivo no genera acciones de mantenimiento'},
+  {id:'PMP-C1',t:'Fecha de la próxima gran parada planificada y presupuesto reservado',s:'Parada no presupuestada en próximo año = CAPEX oculto',c:1},
+  {id:'PMP-C2',t:'Plan de sustitución de membranas: ciclo, coste, proveedores alternativos',s:'Mayor CAPEX recurrente de una desaladora',c:1},
+]},
+{id:'ACT',title:'Gestión de activos y ciclo de vida',sub:'Registro · CAPEX plan · Obsolescencia',items:[
+  {id:'ACT-A1',t:'Fecha de instalación registrada por equipo',s:'Sin fecha, el ciclo de vida es incalculable',c:1},
+  {id:'ACT-A2',t:'Vida útil estimada documentada por tipo de activo',s:'Basada en OEM, norma (ISO 15663) o experiencia'},
+  {id:'ACT-A3',t:'CAPEX de reposición estimado por activo o familia',s:'Necesario para construir el plan de inversiones',c:1},
+  {id:'ACT-A4',t:'Equipos al final de vida útil o en zona de riesgo identificados',s:'Membranas >7 años, bombas AP >20 años, cuadros >25 años',c:1},
+  {id:'ACT-B1',t:'Plan de renovación de activos a 5-10 años con coste estimado',s:'Sin CAPEX plan, la valoración de la planta es incompleta',c:1},
+  {id:'ACT-B2',t:'Pasivo técnico: inversiones identificadas no presupuestadas',s:'Cuantificar en € el déficit de inversión acumulado',c:1},
+  {id:'ACT-B3',t:'Plan de sustitución de membranas con coste y proveedor',s:'Partida de CAPEX más predecible e importante',c:1},
+  {id:'ACT-C1',t:'PLCs y sistemas de control sin soporte activo del fabricante',s:'Siemens S5, Allen-Bradley SLC: riesgo de parada irrecuperable',c:1},
+  {id:'ACT-C2',t:'Variadores de frecuencia de modelos descatalogados',s:'Especialmente crítico en bombas de alta presión',c:1},
+  {id:'ACT-C3',t:'Estrategia ante obsolescencia: compras de reserva, retrofits',s:'¿Existe plan o se gestiona de forma reactiva?'},
+]},
+{id:'PRE',title:'Presupuesto y control de costes',sub:'Estructura · Imputación · CAPEX',items:[
+  {id:'PRE-A1',t:'Presupuesto de mantenimiento anual desagregado (últimos 3 años)',s:'Preventivo, correctivo, grandes paradas, proyectos',c:1},
+  {id:'PRE-A2',t:'Desviación presupuestaria histórica: real vs. presupuesto',s:'Desviaciones recurrentes >15% indican presupuesto irreal',c:1},
+  {id:'PRE-A3',t:'Causas de principales desviaciones positivas y negativas',s:'¿Emergencias, cambios de scope o mala estimación base?'},
+  {id:'PRE-B1',t:'Imputación de costes por equipo y sistema',s:'Imputación por equipo permite análisis de ciclo de vida'},
+  {id:'PRE-B2',t:'Diferenciación: MO propia / contratas / materiales / repuestos',s:'Sin esta distinción, los benchmarks son imposibles'},
+  {id:'PRE-B3',t:'Costes de paradas no programadas cuantificados y reportados',s:'El coste total incluye producción perdida + reparación + penalizaciones'},
+  {id:'PRE-C1',t:'Grandes paradas próximos 3 años: coste estimado y reserva presupuestaria',s:'Sin reserva = CAPEX sorpresa para el nuevo propietario',c:1},
+  {id:'PRE-C2',t:'Pasivo técnico cuantificado en €',s:'Déficit de mantenimiento acumulado',c:1},
+  {id:'PRE-C3',t:'Plan de sustitución de membranas con coste proyectado a 5 años',s:'Puede ser 2-5 M€ en plantas grandes',c:1},
+]},
+{id:'ENE',title:'Gestión energética y utilities',sub:'Eficiencia · Suministro · Utilities',items:[
+  {id:'ENE-A1',t:'Consumo específico de energía (kWh/m³): real vs. diseño',s:'Con ERD: 3-4 kWh/m³; sin ERD: 5-7 kWh/m³',c:1},
+  {id:'ENE-A2',t:'Evolución del consumo específico últimos 3 años (tendencia)',s:'Incremento sostenido indica degradación de membranas o rotativos',c:1},
+  {id:'ENE-A3',t:'Eficiencia ERD medida: % real vs. garantía contractual',s:'Pérdida >3 puntos justifica mantenimiento o sustitución',c:1},
+  {id:'ENE-A4',t:'Curvas de eficiencia de bombas AP: puntos de operación',s:'¿Operan en el BEP o desviados?'},
+  {id:'ENE-B1',t:'Contrato de suministro eléctrico: tarifa y discriminación horaria',s:'¿Se aprovecha la discriminación horaria para operación nocturna?'},
+  {id:'ENE-B2',t:'Factor de potencia (cos φ) de la instalación',s:'Cos φ <0,95 genera penalizaciones en factura eléctrica'},
+  {id:'ENE-B3',t:'Grupos electrógenos: capacidad para arrancar planta en emergencia',s:'¿Pueden arrancar la planta en emergencia total?',c:1},
+  {id:'ENE-C1',t:'Balance hídrico: pérdidas en el sistema, agua de servicios',s:'Pérdidas >3% del agua producida son significativas'},
+  {id:'ENE-C2',t:'Red de aire a presión: auditoría de fugas realizada',s:'Fugas pueden representar 20-30% del consumo del compresor'},
+]},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const state = { items: {}, notes: {}, photos: {}, gallery: [], sections: {} };
+const PHOTO_KEY = 'tdd_photos_v2';
+const GALLERY_KEY = 'tdd_gallery_v1';
+
+SECTIONS.forEach(s => {
+  state.sections[s.id] = true;
+  s.items.forEach(it => { state.items[it.id] = 'none'; state.notes[it.id] = ''; state.photos[it.id] = []; });
+});
+
+let currentFilter = 'all';
+const STORAGE_KEY = 'tdd_checklist_v2';
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items, notes: state.notes }));
+  try {
+    localStorage.setItem(PHOTO_KEY, JSON.stringify(state.photos));
+  } catch(e) { showToast('Almacenamiento lleno. Elimina fotos antiguas.'); }
+  try {
+    localStorage.setItem(GALLERY_KEY, JSON.stringify(state.gallery));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (d.items) Object.assign(state.items, d.items);
+    if (d.notes) Object.assign(state.notes, d.notes);
+    const p = JSON.parse(localStorage.getItem(PHOTO_KEY) || '{}');
+    if (p) Object.assign(state.photos, p);
+    const g = JSON.parse(localStorage.getItem(GALLERY_KEY) || '[]');
+    if (Array.isArray(g)) state.gallery = g;
+  } catch(e) {}
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('main');
+  container.innerHTML = '';
+  let hasVisible = false;
+
+  SECTIONS.forEach(sec => {
+    const visible = sec.items.filter(it => {
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'critical') return it.c;
+      return state.items[it.id] === currentFilter;
+    });
+    if (!visible.length) return;
+    hasVisible = true;
+
+    const ok = sec.items.filter(it => state.items[it.id] === 'ok').length;
+    const fl = sec.items.filter(it => state.items[it.id] === 'flag').length;
+    const done = ok + fl;
+    const pct = sec.items.length > 0 ? Math.round(done / sec.items.length * 100) : 0;
+
+    let badgeClass = 'sb-default', badgeText = `0 / ${sec.items.length}`;
+    if (fl > 0) { badgeClass = 'sb-danger'; badgeText = `${fl} hallazgo${fl > 1 ? 's' : ''}`; }
+    else if (done === sec.items.length && done > 0) { badgeClass = 'sb-ok'; badgeText = 'Completo'; }
+    else if (done > 0) { badgeClass = 'sb-partial'; badgeText = `${done} / ${sec.items.length}`; }
+
+    const isOpen = state.sections[sec.id];
+    const div = document.createElement('div');
+    div.className = 'section';
+    div.innerHTML = `
+      <div class="sec-header" onclick="toggleSection('${sec.id}')">
+        <div class="sec-title-wrap">
+          <div class="sec-title">${sec.title}</div>
+          <div class="sec-sub">${sec.sub}</div>
+        </div>
+        <span class="sec-badge ${badgeClass}">${badgeText}</span>
+        <span class="sec-chevron${isOpen ? ' open' : ''}">&#9654;</span>
+      </div>
+      <div class="sec-progress"><div class="sec-progress-fill" style="width:${pct}%"></div></div>
+      <div class="sec-body${isOpen ? ' open' : ''}" id="sb-${sec.id}">
+        ${visible.map(it => renderItem(it)).join('')}
+      </div>`;
+    container.appendChild(div);
+  });
+
+  if (!hasVisible) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">◎</div><p>Sin ítems en esta vista</p></div>`;
+  }
+
+  updateStats();
+}
+
+function renderItem(it) {
+  const st = state.items[it.id];
+  const cls = st === 'ok' ? ' st-ok' : st === 'flag' ? ' st-flag' : st === 'skip' ? ' st-skip' : '';
+  const cbContent = st === 'ok' ? '✓' : st === 'flag' ? '!' : st === 'skip' ? '–' : '';
+  const note = state.notes[it.id] || '';
+  const photos = state.photos[it.id] || [];
+  const hasPhotos = photos.length > 0;
+
+  const photoThumbs = photos.map((src, idx) =>
+    `<div class="photo-thumb-wrap">
+      <img class="photo-thumb" src="${src}" onclick="openLightbox('${it.id}',${idx})" alt="Foto ${idx+1}">
+      <div class="photo-del" onclick="deletePhoto('${it.id}',${idx})">✕</div>
+    </div>`
+  ).join('');
+
+  return `<div class="item${cls}" id="itm-${it.id}">
+    <div class="cb-wrap"><div class="cb">${cbContent}</div></div>
+    <div class="item-body">
+      <div class="item-text">${it.t}${it.c ? '<span class="ctag">Crítico</span>' : ''}</div>
+      ${it.s ? `<div class="item-sub">${it.s}</div>` : ''}
+      <div class="item-actions">
+        <button class="iact ok" onclick="setItemState('${it.id}','ok')">Conforme</button>
+        <button class="iact flag" onclick="setItemState('${it.id}','flag')">Hallazgo</button>
+        <button class="iact skip" onclick="setItemState('${it.id}','skip')">N/A</button>
+        <button class="iact" onclick="toggleNote('${it.id}')">Nota</button>
+        <button class="iact" onclick="triggerPhoto('${it.id}')">&#128247; Foto</button>
+      </div>
+      <input type="file" accept="image/*" capture="environment"
+        class="photo-input" id="pi-${it.id}"
+        onchange="handlePhoto('${it.id}', this)">
+      <textarea class="note-area${note ? ' visible' : ''}" id="note-${it.id}"
+        placeholder="Observación, evidencia, referencia documental..."
+        onchange="saveNote('${it.id}', this.value)">${note}</textarea>
+      <div class="photo-strip${hasPhotos ? ' visible' : ''}" id="ps-${it.id}">
+        ${photoThumbs}
+        <div class="photo-add-btn" onclick="triggerPhoto('${it.id}')">
+          <div class="photo-add-icon">+</div>
+          <div class="photo-add-lbl">Añadir</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────────────────────────
+function setItemState(id, newState) {
+  state.items[id] = state.items[id] === newState ? 'none' : newState;
+  save();
+  render();
+  showToast(newState === 'ok' ? 'Marcado como conforme' : newState === 'flag' ? 'Hallazgo registrado' : 'Marcado N/A');
+}
+
+function toggleNote(id) {
+  const ta = document.getElementById('note-' + id);
+  if (ta) {
+    ta.classList.toggle('visible');
+    if (ta.classList.contains('visible')) ta.focus();
+  }
+}
+
+function saveNote(id, val) {
+  state.notes[id] = val;
+  save();
+}
+
+// ── PHOTOS ────────────────────────────────────────────────────────────────────
+function triggerPhoto(id) {
+  const input = document.getElementById('pi-' + id);
+  if (input) input.click();
+}
+
+function handlePhoto(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Compress before storing
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.72);
+      if (!state.photos[id]) state.photos[id] = [];
+      state.photos[id].push(compressed);
+      save();
+      // Update strip without full re-render
+      updatePhotoStrip(id);
+      showToast('Foto añadida');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = ''; // Reset so same file can be re-selected
+}
+
+function updatePhotoStrip(id) {
+  const strip = document.getElementById('ps-' + id);
+  if (!strip) return;
+  const photos = state.photos[id] || [];
+  const thumbs = photos.map((src, idx) =>
+    `<div class="photo-thumb-wrap">
+      <img class="photo-thumb" src="${src}" onclick="openLightbox('${id}',${idx})" alt="Foto ${idx+1}">
+      <div class="photo-del" onclick="deletePhoto('${id}',${idx})">✕</div>
+    </div>`
+  ).join('');
+  strip.innerHTML = thumbs + `<div class="photo-add-btn" onclick="triggerPhoto('${id}')">
+    <div class="photo-add-icon">+</div>
+    <div class="photo-add-lbl">Añadir</div>
+  </div>`;
+  strip.classList.toggle('visible', photos.length > 0);
+}
+
+function deletePhoto(id, idx) {
+  if (!state.photos[id]) return;
+  state.photos[id].splice(idx, 1);
+  save();
+  updatePhotoStrip(id);
+  showToast('Foto eliminada');
+}
+
+function openLightbox(id, idx) {
+  const src = (state.photos[id] || [])[idx];
+  if (!src) return;
+  const it = SECTIONS.flatMap(s => s.items).find(x => x.id === id);
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-caption').textContent =
+    `${id} · Foto ${idx + 1} de ${state.photos[id].length}${it ? ' — ' + it.t.substring(0, 50) + '…' : ''}`;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+function toggleSection(id) {
+  state.sections[id] = !state.sections[id];
+  const body = document.getElementById('sb-' + id);
+  const header = body?.previousElementSibling?.previousElementSibling;
+  if (body) body.classList.toggle('open', state.sections[id]);
+  const chv = body?.parentElement?.querySelector('.sec-chevron');
+  if (chv) chv.classList.toggle('open', state.sections[id]);
+  const pg = body?.previousElementSibling;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function expandAll() { SECTIONS.forEach(s => { state.sections[s.id] = true; }); render(); }
+function collapseAll() { SECTIONS.forEach(s => { state.sections[s.id] = false; }); render(); }
+
+function resetAll() {
+  if (!confirm('¿Reiniciar todo el checklist? Se perderán todos los datos y fotos.')) return;
+  SECTIONS.forEach(s => s.items.forEach(it => {
+    state.items[it.id] = 'none';
+    state.notes[it.id] = '';
+    state.photos[it.id] = [];
+  }));
+  state.gallery = [];
+  save(); render();
+  showToast('Checklist reiniciado');
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const all = SECTIONS.flatMap(s => s.items);
+  const total = all.length;
+  const ok = all.filter(it => state.items[it.id] === 'ok').length;
+  const fl = all.filter(it => state.items[it.id] === 'flag').length;
+  const skip = all.filter(it => state.items[it.id] === 'skip').length;
+  const done = ok + fl + skip;
+  const pct = total ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('sv-total').textContent = total;
+  document.getElementById('sv-ok').textContent = ok;
+  document.getElementById('sv-flag').textContent = fl;
+  document.getElementById('sv-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+
+  const score = total ? Math.max(0, Math.min(100, Math.round((ok - fl * 1.5) / total * 100))) : 0;
+  const matLevels = [[80,'Excelente — Nivel 5/5'],[60,'Maduro — Nivel 4/5'],[40,'En desarrollo — Nivel 3/5'],[20,'Básico — Nivel 2/5'],[0,'Inexistente — Nivel 1/5']];
+  const [, mn] = matLevels.find(([v]) => score >= v) || matLevels[4];
+  document.getElementById('mat-val').textContent = mn;
+}
+
+// ── REPORT ────────────────────────────────────────────────────────────────────
+function openReport() {
+  const all = SECTIONS.flatMap(s => s.items);
+  const flags = all.filter(it => state.items[it.id] === 'flag');
+  const ok = all.filter(it => state.items[it.id] === 'ok').length;
+  const skip = all.filter(it => state.items[it.id] === 'skip').length;
+
+  let html = `<div class="modal-section">
+    <div class="modal-label">Resumen global</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="stat"><div class="stat-val ok">${ok}</div><div class="stat-lbl">Conforme</div></div>
+      <div class="stat"><div class="stat-val danger">${flags.length}</div><div class="stat-lbl">Hallazgos</div></div>
+      <div class="stat"><div class="stat-val accent">${skip}</div><div class="stat-lbl">N/A</div></div>
+    </div>
+  </div>`;
+
+  if (flags.length === 0) {
+    html += `<div class="modal-section"><div class="modal-label">Hallazgos</div>
+      <div style="text-align:center;padding:24px 0;font-family:var(--font-mono);font-size:12px;color:var(--text3)">Sin hallazgos marcados aún</div>
+    </div>`;
+  } else {
+    const critical = flags.filter(it => it.c);
+    const nonCritical = flags.filter(it => !it.c);
+    if (critical.length > 0) {
+      html += `<div class="modal-section"><div class="modal-label">${critical.length} Hallazgo${critical.length > 1 ? 's' : ''} crítico${critical.length > 1 ? 's' : ''}</div>`;
+      critical.forEach(it => {
+        const sec = SECTIONS.find(s => s.items.find(x => x.id === it.id));
+        const note = state.notes[it.id];
+        const photoCount = (state.photos[it.id] || []).length;
+        html += `<div class="finding-item">
+          <div class="finding-code">${it.id} · ${sec?.title || ''}${photoCount > 0 ? ` · <span style="color:var(--accent)">${photoCount} foto${photoCount > 1 ? 's' : ''}</span>` : ''}</div>
+          <div class="finding-text">${it.t}</div>
+          ${note ? `<div class="finding-note">${note}</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+    if (nonCritical.length > 0) {
+      html += `<div class="modal-section"><div class="modal-label">${nonCritical.length} Hallazgo${nonCritical.length > 1 ? 's' : ''} adicional${nonCritical.length > 1 ? 'es' : ''}</div>`;
+      nonCritical.forEach(it => {
+        const sec = SECTIONS.find(s => s.items.find(x => x.id === it.id));
+        const note = state.notes[it.id];
+        const photoCount = (state.photos[it.id] || []).length;
+        html += `<div class="finding-item" style="background:var(--warn-bg);border-color:rgba(243,156,18,0.25)">
+          <div class="finding-code" style="color:var(--warn)">${it.id} · ${sec?.title || ''}${photoCount > 0 ? ` · <span style="color:var(--accent)">${photoCount} foto${photoCount > 1 ? 's' : ''}</span>` : ''}</div>
+          <div class="finding-text">${it.t}</div>
+          ${note ? `<div class="finding-note">${note}</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+  }
+
+  html += `<div class="modal-section"><div class="modal-label">Estado por área</div>`;
+  SECTIONS.forEach(sec => {
+    const ok2 = sec.items.filter(it => state.items[it.id] === 'ok').length;
+    const fl2 = sec.items.filter(it => state.items[it.id] === 'flag').length;
+    const done2 = ok2 + sec.items.filter(it => state.items[it.id] === 'skip').length;
+    const pct2 = Math.round(done2 / sec.items.length * 100);
+    const color = fl2 > 0 ? 'var(--danger)' : pct2 === 100 ? 'var(--ok)' : 'var(--text2)';
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);gap:8px">
+      <span style="font-family:var(--font-body);font-size:12px;color:var(--text);flex:1">${sec.title}</span>
+      <span style="font-family:var(--font-mono);font-size:11px;color:${color}">${fl2 > 0 ? fl2 + ' ✗' : pct2 === 100 ? '✓' : pct2 + '%'}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) { if (e.target === document.getElementById('modal-overlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+// Cambia estos valores por los que quieras usar
+const CREDENTIALS = [
+  { user: 'jose',  pass: 'tdd2024' },
+  { user: 'admin', pass: 'desaladora' }
+];
+const SESSION_KEY = 'tdd_auth_v1';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutos
+
+function checkSession() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
+    return s && s.ok === true;
+  } catch(e) { return false; }
+}
+
+function getLockout() {
+  try {
+    const d = JSON.parse(localStorage.getItem('tdd_lockout') || 'null');
+    if (!d) return null;
+    if (Date.now() - d.time > LOCKOUT_MS) { localStorage.removeItem('tdd_lockout'); return null; }
+    return d;
+  } catch(e) { return null; }
+}
+
+function getAttempts() {
+  try { return parseInt(localStorage.getItem('tdd_attempts') || '0'); } catch(e) { return 0; }
+}
+
+function doLogin() {
+  const lockout = getLockout();
+  if (lockout) {
+    const remaining = Math.ceil((LOCKOUT_MS - (Date.now() - lockout.time)) / 60000);
+    document.getElementById('login-error').textContent = `Bloqueado. Espera ${remaining} min.`;
+    document.getElementById('login-error').classList.add('visible');
+    return;
+  }
+
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const valid = CREDENTIALS.some(c => c.user === user && c.pass === pass);
+
+  if (valid) {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ok: true }));
+    localStorage.removeItem('tdd_attempts');
+    localStorage.removeItem('tdd_lockout');
+    document.getElementById('login-screen').style.opacity = '0';
+    document.getElementById('login-screen').style.transition = 'opacity 0.3s';
+    setTimeout(() => document.getElementById('login-screen').remove(), 300);
+  } else {
+    const attempts = getAttempts() + 1;
+    localStorage.setItem('tdd_attempts', attempts);
+    const passInput = document.getElementById('login-pass');
+    passInput.classList.add('error');
+    setTimeout(() => passInput.classList.remove('error'), 400);
+    passInput.value = '';
+    passInput.focus();
+
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = 'Usuario o contraseña incorrectos';
+    errEl.classList.add('visible');
+
+    const remaining = MAX_ATTEMPTS - attempts;
+    if (remaining <= 0) {
+      localStorage.setItem('tdd_lockout', JSON.stringify({ time: Date.now() }));
+      localStorage.removeItem('tdd_attempts');
+      errEl.textContent = 'Demasiados intentos. Bloqueado 5 minutos.';
+      document.getElementById('login-attempts').textContent = '';
+    } else {
+      document.getElementById('login-attempts').textContent =
+        `${remaining} intento${remaining !== 1 ? 's' : ''} restante${remaining !== 1 ? 's' : ''}`;
+    }
+  }
+}
+
+function initLoginScreen() {
+  if (checkSession()) {
+    document.getElementById('login-screen').remove();
+    return;
+  }
+  // Focus user field on load
+  setTimeout(() => {
+    const u = document.getElementById('login-user');
+    if (u) u.focus();
+  }, 100);
+}
+
+// ── PDF EXPORT ────────────────────────────────────────────────────────────────
+async function loadjsPDF() {
+  if (window.jspdf) return window.jspdf.jsPDF;
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => resolve(window.jspdf.jsPDF);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function exportPDF() {
+  const btn = document.getElementById('pdf-btn');
+  const btnText = document.getElementById('pdf-btn-text');
+  btn.classList.add('loading');
+  btnText.textContent = 'Generando PDF...';
+  showToast('Generando PDF…');
+
+  try {
+    const jsPDF = await loadjsPDF();
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const W = 210, ML = 14, MR = 14, TW = W - ML - MR;
+    const DARK   = [15, 25, 35];
+    const DARK2  = [22, 35, 47];
+    const ACCENT = [62, 184, 240];
+    const WHITE  = [232, 244, 251];
+    const GREY   = [74, 122, 150];
+    const OK     = [46, 204, 113];
+    const DANGER = [231, 76, 60];
+    const WARN   = [243, 156, 18];
+
+    let y = 0;
+
+    function newPage() {
+      doc.addPage();
+      y = 0;
+      // Dark header bar
+      doc.setFillColor(...DARK);
+      doc.rect(0, 0, W, 297, 'F');
+    }
+
+    function checkY(needed) {
+      if (y + needed > 275) { newPage(); }
+    }
+
+    function drawHeader() {
+      // Full dark background
+      doc.setFillColor(...DARK);
+      doc.rect(0, 0, W, 297, 'F');
+
+      // Top accent bar
+      doc.setFillColor(...ACCENT);
+      doc.rect(0, 0, W, 18, 'F');
+
+      // App name
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(15, 25, 35);
+      doc.text('TDD CHECK  ·  Mantenimiento Desaladora', ML, 11.5);
+
+      // Date right
+      const dateStr = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+      doc.setFontSize(8);
+      doc.text(dateStr, W - MR, 11.5, { align: 'right' });
+
+      y = 26;
+
+      // Title block
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(...WHITE);
+      doc.text('Informe de Due Diligence', ML, y);
+      y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(...GREY);
+      doc.text('Technical Due Diligence — Departamento de Mantenimiento', ML, y);
+      y += 12;
+    }
+
+    function drawSummaryCards() {
+      const all = SECTIONS.flatMap(s => s.items);
+      const total = all.length;
+      const ok = all.filter(it => state.items[it.id] === 'ok').length;
+      const fl = all.filter(it => state.items[it.id] === 'flag').length;
+      const skip = all.filter(it => state.items[it.id] === 'skip').length;
+      const done = ok + fl + skip;
+      const pct = total ? Math.round(done / total * 100) : 0;
+
+      const cards = [
+        { label: 'Ítems totales', val: total, color: ACCENT },
+        { label: 'Conforme',      val: ok,    color: OK },
+        { label: 'Hallazgos',     val: fl,    color: DANGER },
+        { label: 'Completado',    val: pct + '%', color: fl > 0 ? WARN : OK },
+      ];
+
+      checkY(28);
+      const cw = (TW - 9) / 4;
+      cards.forEach((c, i) => {
+        const cx = ML + i * (cw + 3);
+        doc.setFillColor(...DARK2);
+        doc.roundedRect(cx, y, cw, 22, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(...c.color);
+        doc.text(String(c.val), cx + cw / 2, y + 13, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(...GREY);
+        doc.text(c.label.toUpperCase(), cx + cw / 2, y + 19, { align: 'center' });
+      });
+      y += 28;
+    }
+
+    function drawMaturity() {
+      const all = SECTIONS.flatMap(s => s.items);
+      const total = all.length;
+      const ok = all.filter(it => state.items[it.id] === 'ok').length;
+      const fl = all.filter(it => state.items[it.id] === 'flag').length;
+      const score = total ? Math.max(0, Math.min(100, Math.round((ok - fl * 1.5) / total * 100))) : 0;
+      const matLevels = [[80,'Excelente — Nivel 5/5'],[60,'Maduro — Nivel 4/5'],[40,'En desarrollo — Nivel 3/5'],[20,'Básico — Nivel 2/5'],[0,'Inexistente — Nivel 1/5']];
+      const [, mn] = matLevels.find(([v]) => score >= v) || matLevels[4];
+
+      checkY(14);
+      doc.setFillColor(...DARK2);
+      doc.roundedRect(ML, y, TW, 10, 2, 2, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...GREY);
+      doc.text('MADUREZ CMMS:', ML + 3, y + 6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...ACCENT);
+      doc.text(mn, ML + 38, y + 6.5);
+      // Progress bar
+      const barX = ML + 95, barW = TW - 95 - 3, barH = 3;
+      doc.setFillColor(...DARK);
+      doc.roundedRect(barX, y + 3.5, barW, barH, 1, 1, 'F');
+      doc.setFillColor(...ACCENT);
+      doc.roundedRect(barX, y + 3.5, barW * score / 100, barH, 1, 1, 'F');
+      y += 16;
+    }
+
+    function sectionLabel(title) {
+      checkY(14);
+      doc.setFillColor(...ACCENT);
+      doc.rect(ML, y, 3, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...WHITE);
+      doc.text(title.toUpperCase(), ML + 6, y + 5.5);
+      y += 13;
+    }
+
+    function drawFinding(it, isCritical) {
+      const sec = SECTIONS.find(s => s.items.find(x => x.id === it.id));
+      const note = state.notes[it.id] || '';
+      const photos = state.photos[it.id] || [];
+      const noteLines = note ? doc.splitTextToSize(note, TW - 8) : [];
+      const textLines = doc.splitTextToSize(it.t, TW - 22);
+      const boxH = 6 + textLines.length * 4.5 + (noteLines.length > 0 ? noteLines.length * 3.8 + 4 : 0) + 4;
+
+      checkY(boxH + 2);
+
+      const bgColor = isCritical ? [50, 20, 18] : [45, 35, 10];
+      const borderColor = isCritical ? DANGER : WARN;
+      const codeColor = isCritical ? DANGER : WARN;
+
+      doc.setFillColor(...bgColor);
+      doc.roundedRect(ML, y, TW, boxH, 2, 2, 'F');
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(ML, y, TW, boxH, 2, 2, 'S');
+
+      // Left accent bar
+      doc.setFillColor(...borderColor);
+      doc.rect(ML, y, 2.5, boxH, 'F');
+
+      // Code + section
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(...codeColor);
+      doc.text(`${it.id}  ·  ${sec?.title || ''}${photos.length > 0 ? `  ·  ${photos.length} foto${photos.length > 1 ? 's' : ''}` : ''}`, ML + 6, y + 4.5);
+
+      // Item text
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...WHITE);
+      let ty = y + 9;
+      textLines.forEach(line => { doc.text(line, ML + 6, ty); ty += 4.5; });
+
+      // Note
+      if (noteLines.length > 0) {
+        ty += 1;
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...GREY);
+        noteLines.forEach(line => { doc.text(line, ML + 6, ty); ty += 3.8; });
+      }
+
+      y += boxH + 3;
+    }
+
+    async function drawPhotosForItem(it) {
+      const photos = state.photos[it.id] || [];
+      if (!photos.length) return;
+
+      checkY(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(...GREY);
+      doc.text(`EVIDENCIA FOTOGRÁFICA — ${it.id}`, ML, y);
+      y += 5;
+
+      const imgW = (TW - 6) / 3;
+      const imgH = imgW * 0.75;
+      let col = 0;
+
+      for (const src of photos) {
+        if (col === 0) checkY(imgH + 6);
+        const ix = ML + col * (imgW + 3);
+        try {
+          doc.addImage(src, 'JPEG', ix, y, imgW, imgH, undefined, 'MEDIUM');
+          doc.setDrawColor(...GREY);
+          doc.setLineWidth(0.2);
+          doc.roundedRect(ix, y, imgW, imgH, 1, 1, 'S');
+        } catch(e) { /* skip corrupt image */ }
+        col++;
+        if (col === 3) { col = 0; y += imgH + 4; }
+      }
+      if (col > 0) y += imgH + 4;
+      y += 4;
+    }
+
+    function drawAreaSummaryTable() {
+      checkY(20);
+      sectionLabel('Estado por área');
+
+      const colW = [TW * 0.45, TW * 0.14, TW * 0.14, TW * 0.14, TW * 0.13];
+      const headers = ['Área', 'Conforme', 'Hallazgos', 'N/A', '%'];
+      const rowH = 7;
+
+      // Header row
+      doc.setFillColor(...ACCENT);
+      doc.rect(ML, y, TW, rowH, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...DARK);
+      let cx = ML;
+      headers.forEach((h, i) => {
+        doc.text(h, cx + (i === 0 ? 2 : colW[i] / 2), y + 4.8, { align: i === 0 ? 'left' : 'center' });
+        cx += colW[i];
+      });
+      y += rowH;
+
+      SECTIONS.forEach((sec, si) => {
+        checkY(rowH);
+        const ok2 = sec.items.filter(it => state.items[it.id] === 'ok').length;
+        const fl2 = sec.items.filter(it => state.items[it.id] === 'flag').length;
+        const sk2 = sec.items.filter(it => state.items[it.id] === 'skip').length;
+        const pct2 = Math.round((ok2 + fl2 + sk2) / sec.items.length * 100);
+
+        doc.setFillColor(si % 2 === 0 ? 22 : 18, si % 2 === 0 ? 35 : 28, si % 2 === 0 ? 47 : 38);
+        doc.rect(ML, y, TW, rowH, 'F');
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        cx = ML;
+
+        doc.setTextColor(...WHITE);
+        doc.text(sec.title, cx + 2, y + 4.8);
+        cx += colW[0];
+
+        doc.setTextColor(...OK);
+        doc.text(String(ok2), cx + colW[1] / 2, y + 4.8, { align: 'center' });
+        cx += colW[1];
+
+        doc.setTextColor(...(fl2 > 0 ? DANGER : GREY));
+        doc.text(String(fl2), cx + colW[2] / 2, y + 4.8, { align: 'center' });
+        cx += colW[2];
+
+        doc.setTextColor(...GREY);
+        doc.text(String(sk2), cx + colW[3] / 2, y + 4.8, { align: 'center' });
+        cx += colW[3];
+
+        doc.setTextColor(...(pct2 === 100 ? OK : GREY));
+        doc.text(pct2 + '%', cx + colW[4] / 2, y + 4.8, { align: 'center' });
+
+        // Flag indicator bar on left if has findings
+        if (fl2 > 0) {
+          doc.setFillColor(...DANGER);
+          doc.rect(ML, y, 2, rowH, 'F');
+        }
+
+        y += rowH;
+      });
+      y += 8;
+    }
+
+    function drawPageNumbers() {
+      const total = doc.getNumberOfPages();
+      for (let i = 1; i <= total; i++) {
+        doc.setPage(i);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(...GREY);
+        doc.text(`TDD Check  ·  Pág. ${i} / ${total}`, W / 2, 292, { align: 'center' });
+      }
+    }
+
+    // ── BUILD PDF ──
+    drawHeader();
+    drawSummaryCards();
+    drawMaturity();
+    y += 4;
+
+    // Area summary table
+    drawAreaSummaryTable();
+
+    // Critical findings
+    const all = SECTIONS.flatMap(s => s.items);
+    const criticalFlags = all.filter(it => state.items[it.id] === 'flag' && it.c);
+    const otherFlags = all.filter(it => state.items[it.id] === 'flag' && !it.c);
+
+    if (criticalFlags.length > 0) {
+      checkY(20);
+      sectionLabel(`Hallazgos críticos (${criticalFlags.length})`);
+      criticalFlags.forEach(it => drawFinding(it, true));
+    }
+
+    if (otherFlags.length > 0) {
+      checkY(20);
+      sectionLabel(`Hallazgos adicionales (${otherFlags.length})`);
+      otherFlags.forEach(it => drawFinding(it, false));
+    }
+
+    if (criticalFlags.length === 0 && otherFlags.length === 0) {
+      checkY(20);
+      sectionLabel('Hallazgos');
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(...GREY);
+      doc.text('Sin hallazgos registrados.', ML, y);
+      y += 10;
+    }
+
+    // Conforming items summary
+    const okItems = all.filter(it => state.items[it.id] === 'ok');
+    if (okItems.length > 0) {
+      checkY(20);
+      sectionLabel(`Ítems conformes (${okItems.length})`);
+      okItems.forEach(it => {
+        const sec = SECTIONS.find(s => s.items.find(x => x.id === it.id));
+        const lines = doc.splitTextToSize(it.t, TW - 20);
+        checkY(lines.length * 4.5 + 6);
+        doc.setFillColor(...[18, 40, 28]);
+        doc.roundedRect(ML, y, TW, lines.length * 4.5 + 5, 1.5, 1.5, 'F');
+        doc.setFillColor(...OK);
+        doc.rect(ML, y, 2.5, lines.length * 4.5 + 5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(...[46, 140, 90]);
+        doc.text(it.id, ML + 6, y + 4);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...WHITE);
+        lines.forEach((ln, li) => doc.text(ln, ML + 20, y + 4 + li * 4.5));
+        y += lines.length * 4.5 + 7;
+      });
+    }
+
+    // Photos section — one page per item with photos
+    const itemsWithPhotos = all.filter(it => (state.photos[it.id] || []).length > 0);
+    if (itemsWithPhotos.length > 0) {
+      newPage();
+      y = 22;
+      doc.setFillColor(...ACCENT);
+      doc.rect(0, 0, W, 18, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...DARK);
+      doc.text('ANEXO FOTOGRÁFICO', ML, 11.5);
+      doc.setFontSize(8);
+      doc.text(`${itemsWithPhotos.reduce((a, it) => a + (state.photos[it.id] || []).length, 0)} fotos adjuntas`, W - MR, 11.5, { align: 'right' });
+
+      for (const it of itemsWithPhotos) {
+        await drawPhotosForItem(it);
+      }
+    }
+
+    // Gallery annex
+    if (state.gallery && state.gallery.length > 0) {
+      newPage();
+      y = 22;
+      doc.setFillColor(...ACCENT);
+      doc.rect(0, 0, W, 18, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...DARK);
+      doc.text('ANEXO FOTOGRÁFICO — GALERÍA', ML, 11.5);
+      doc.setFontSize(8);
+      doc.text(`${state.gallery.length} fotografías`, W - MR, 11.5, { align: 'right' });
+
+      for (const photo of state.gallery) {
+        checkY(80);
+        // Photo title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...WHITE);
+        doc.text(photo.title || 'Sin título', ML, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...GREY);
+        const dt = new Date(photo.createdAt);
+        doc.text(`${dt.toLocaleDateString('es-ES')} · ${photo.device}`, ML, y + 5);
+        y += 10;
+
+        // Image
+        try {
+          const imgH = 55;
+          doc.addImage(photo.src, 'JPEG', ML, y, TW * 0.5, imgH, undefined, 'MEDIUM');
+          doc.setDrawColor(...GREY);
+          doc.setLineWidth(0.2);
+          doc.roundedRect(ML, y, TW * 0.5, imgH, 1, 1, 'S');
+
+          // AI result alongside
+          if (photo.aiResult) {
+            const aiLines = doc.splitTextToSize(photo.aiResult, TW * 0.45 - 4);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...WHITE);
+            let ay = y + 4;
+            aiLines.forEach(line => {
+              if (ay < y + imgH - 2) { doc.text(line, ML + TW * 0.5 + 5, ay); ay += 4; }
+            });
+          }
+          y += imgH + 8;
+        } catch(e) { y += 8; }
+      }
+    }
+
+    drawPageNumbers();
+
+    // Save
+    const filename = `TDD_Check_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(filename);
+    showToast('PDF generado correctamente');
+
+  } catch(err) {
+    console.error(err);
+    showToast('Error al generar el PDF');
+  } finally {
+    btn.classList.remove('loading');
+    btnText.textContent = 'Exportar PDF completo';
+  }
+}
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+const THEME_KEY = 'tdd_theme_v1';
+
+function applyTheme(mode) {
+  if (mode === 'light') {
+    document.body.classList.add('light');
+  } else {
+    document.body.classList.remove('light');
+  }
+  // Update meta theme-color for iOS status bar
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', mode === 'light' ? '#f5f7fa' : '#0f1923');
+  localStorage.setItem(THEME_KEY, mode);
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.contains('light');
+  applyTheme(isLight ? 'dark' : 'light');
+  showToast(isLight ? 'Modo oscuro' : 'Modo claro');
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem(THEME_KEY);
+  // Default to light if no preference saved, or respect saved choice
+  const mode = saved || 'dark';
+  applyTheme(mode);
+}
+
+// ── DRAWER ────────────────────────────────────────────────────────────────────
+function openDrawer(name) {
+  document.getElementById(name+'-overlay').classList.add('open');
+  document.getElementById(name+'-drawer').classList.add('open');
+  if (name === 'drive') { updateDriveSaveName(); }
+  if (name === 'gallery') { renderGalleryGrid(); }
+  if (name === 'settings') { loadApiKeyBadges(); }
+}
+function closeDrawer(name) {
+  document.getElementById(name+'-overlay').classList.remove('open');
+  document.getElementById(name+'-drawer').classList.remove('open');
+}
+
+// ── SETTINGS — API KEYS ───────────────────────────────────────────────────────
+const API_KEY_STORE = 'tdd_apikeys_v1';
+let currentApiTab = 'claude';
+
+function setApiTab(tab, btn) {
+  currentApiTab = tab;
+  ['claude','gemini','openai'].forEach(t => {
+    document.getElementById('api-panel-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.api-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function getApiKeys() {
+  try { return JSON.parse(localStorage.getItem(API_KEY_STORE)||'{}'); } catch(e) { return {}; }
+}
+
+function saveApiKey(provider) {
+  const val = document.getElementById('key-'+provider).value.trim();
+  if (!val) { showToast('Introduce una API key'); return; }
+  const keys = getApiKeys(); keys[provider] = val;
+  localStorage.setItem(API_KEY_STORE, JSON.stringify(keys));
+  loadApiKeyBadges(); showToast('API key guardada');
+}
+
+function loadApiKeyBadges() {
+  const keys = getApiKeys();
+  ['claude','gemini','openai'].forEach(p => {
+    const b = document.getElementById('badge-'+p); if (!b) return;
+    if (keys[p]) { b.textContent='Configurado'; b.className='api-status-badge set'; }
+    else { b.textContent='No configurado'; b.className='api-status-badge unset'; }
+  });
+}
+
+function saveCredentials() {
+  const user = document.getElementById('new-user').value.trim();
+  const pass = document.getElementById('new-pass').value;
+  if (!user||!pass) { showToast('Rellena usuario y contraseña'); return; }
+  localStorage.setItem('tdd_custom_creds', JSON.stringify({user,pass}));
+  showToast('Credenciales actualizadas. Tendrán efecto en el próximo inicio de sesión.');
+}
+
+// ── GOOGLE DRIVE ──────────────────────────────────────────────────────────────
+const DRIVE_CLIENT_ID = '1044776711458-pk53fqkjcg295nfmqifl1mdejfe1tas9.apps.googleusercontent.com';
+const DRIVE_SCOPES    = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
+const DRIVE_FOLDER    = 'TDD';
+let driveToken = null;
+let driveFolderId = null;
+
+function getDeviceName() {
+  const ua = navigator.userAgent;
+  if (/iPad/.test(ua)) return 'iPad';
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/Android/.test(ua)) return 'Android';
+  if (/Macintosh/.test(ua)) return 'Mac';
+  if (/Windows/.test(ua)) return 'Windows';
+  return 'Dispositivo';
+}
+
+function updateDriveSaveName() {
+  const now  = new Date();
+  const date = now.toISOString().slice(0,10);
+  const time = now.toTimeString().slice(0,5).replace(':','h');
+  const el   = document.getElementById('drive-save-name');
+  if (el) el.textContent = `TDD / ${getDeviceName()}_${date}_${time}.json`;
+}
+
+function driveSetStatus(state, text) {
+  const el  = document.getElementById('drive-status');
+  const txt = document.getElementById('drive-status-text');
+  if (el)  el.className  = 'drive-status ' + state;
+  if (txt) txt.textContent = text;
+}
+
+function driveSetConnectedUI(connected) {
+  const show = (id, yes) => { const el=document.getElementById(id); if(el) el.style.display=yes?'flex':'none'; };
+  const showB = (id, yes) => { const el=document.getElementById(id); if(el) el.style.display=yes?'block':'none'; };
+  show('drive-auth-btn', !connected);
+  show('drive-disconnect-btn', connected);
+  showB('drive-save-section', connected);
+  showB('drive-copies-section', connected);
+  if (connected) {
+    driveSetStatus('connected', 'Conectado a Google Drive');
+  } else {
+    driveSetStatus('disconnected', 'No conectado');
+  }
+}
+
+function driveAuth() {
+  if (!window.google) { showToast('Google API no cargada aún, espera un momento'); return; }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: DRIVE_CLIENT_ID,
+    scope: DRIVE_SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { showToast('Error al conectar: ' + resp.error); return; }
+      driveToken = resp.access_token;
+      driveSetConnectedUI(true);
+      try {
+        const r = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
+          headers: { Authorization: 'Bearer '+driveToken }
+        });
+        const info = await r.json();
+        const el = document.getElementById('drive-user-email');
+        if (el) el.textContent = info.email || 'Google conectado';
+      } catch(e) {}
+      await driveEnsureFolder();
+      driveListCopies();
+    }
+  });
+  client.requestAccessToken();
+}
+
+function driveDisconnect() {
+  driveToken = null; driveFolderId = null;
+  driveSetConnectedUI(false);
+  const el = document.getElementById('drive-copies-list');
+  if (el) el.innerHTML = '';
+  showToast('Desconectado de Drive');
+}
+
+async function driveEnsureFolder() {
+  const q = `name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`, {
+    headers: { Authorization: 'Bearer '+driveToken }
+  });
+  const d = await r.json();
+  if (d.files && d.files.length > 0) {
+    driveFolderId = d.files[0].id;
+  } else {
+    const cr = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer '+driveToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: DRIVE_FOLDER, mimeType: 'application/vnd.google-apps.folder' })
+    });
+    const cd = await cr.json();
+    driveFolderId = cd.id;
+  }
+}
+
+async function driveSave() {
+  if (!driveToken) { showToast('Conecta primero con Google'); return; }
+  driveSetStatus('loading', 'Guardando copia completa…');
+  const now  = new Date();
+  const date = now.toISOString().slice(0,10);
+  const time = now.toTimeString().slice(0,5).replace(':','h');
+  const dev  = getDeviceName();
+  const filename = `${dev}_${date}_${time}.json`;
+
+  // Full snapshot — includes everything
+  const snapshot = {
+    version: 3,
+    savedAt: now.toISOString(),
+    device: dev,
+    items:   state.items,
+    notes:   state.notes,
+    photos:  state.photos,   // item-level photos (base64)
+    gallery: state.gallery   // standalone gallery with AI results
+  };
+
+  try {
+    const blob    = new Blob([JSON.stringify(snapshot)], { type: 'application/json' });
+    const meta    = new Blob([JSON.stringify({ name: filename, parents: [driveFolderId] })], { type: 'application/json' });
+    const form    = new FormData();
+    form.append('metadata', meta);
+    form.append('file', blob);
+
+    const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer '+driveToken },
+      body: form
+    });
+    if (r.ok) {
+      showToast('✓ Copia completa guardada en Drive');
+      driveListCopies();
+    } else {
+      const err = await r.json();
+      showToast('Error: ' + (err.error?.message || r.status));
+    }
+  } catch(e) { showToast('Error de red: ' + e.message); }
+  driveSetConnectedUI(true);
+}
+
+async function driveListCopies() {
+  if (!driveToken || !driveFolderId) return;
+  driveSetStatus('loading', 'Cargando lista…');
+  try {
+    const q = `'${driveFolderId}' in parents and trashed=false`;
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,createdTime,size)&orderBy=createdTime+desc`,
+      { headers: { Authorization: 'Bearer '+driveToken } }
+    );
+    const d = await r.json();
+    const files = d.files || [];
+    const countEl = document.getElementById('drive-copies-count');
+    if (countEl) countEl.textContent = `(${files.length})`;
+    const list = document.getElementById('drive-copies-list');
+    if (!list) return;
+    if (!files.length) {
+      list.innerHTML = '<div style="text-align:center;padding:16px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Sin copias guardadas</div>';
+    } else {
+      list.innerHTML = files.map(f => {
+        const dt   = new Date(f.createdTime);
+        const ds   = dt.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+        const ts   = dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        const kb   = f.size ? Math.round(f.size/1024)+' KB' : '';
+        const dev  = f.name.replace('.json','').split('_')[0] || '';
+        return `<div class="copy-item">
+          <div class="copy-name">${f.name}</div>
+          <div class="copy-meta">${ds} · ${ts}${kb?' · '+kb:''}${dev?' · '+dev:''}</div>
+          <div class="copy-actions">
+            <button class="copy-btn load" onclick="driveLoad('${f.id}','${f.name}')">Cargar</button>
+            <button class="copy-btn del"  onclick="driveDelete('${f.id}','${f.name}')">Borrar</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { showToast('Error al listar: '+e.message); }
+  driveSetConnectedUI(true);
+}
+
+async function driveLoad(fileId, fileName) {
+  if (!confirm(`¿Cargar "${fileName}"?\nSe sobreescribirá TODO el estado local (checklist, notas, fotos, galería).`)) return;
+  driveSetStatus('loading', 'Cargando copia…');
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: 'Bearer '+driveToken }
+    });
+    const d = await r.json();
+    // Restore full snapshot
+    if (d.items)   Object.assign(state.items, d.items);
+    if (d.notes)   Object.assign(state.notes, d.notes);
+    if (d.photos)  Object.assign(state.photos, d.photos);
+    if (d.gallery && Array.isArray(d.gallery)) state.gallery = d.gallery;
+    save();
+    render();
+    renderGalleryGrid();
+    showToast('✓ Copia cargada correctamente');
+    closeDrawer('drive');
+  } catch(e) { showToast('Error al cargar: '+e.message); }
+  driveSetConnectedUI(true);
+}
+
+async function driveDelete(fileId, fileName) {
+  if (!confirm(`¿Eliminar "${fileName}" de Drive?\nEsta acción no se puede deshacer.`)) return;
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer '+driveToken }
+    });
+    if (r.status === 204 || r.ok) {
+      showToast('Copia eliminada');
+      driveListCopies();
+    } else { showToast('Error al eliminar'); }
+  } catch(e) { showToast('Error: '+e.message); }
+}
+
+// ── GALLERY ───────────────────────────────────────────────────────────────────
+// state.gallery = [{ id, title, src, aiResult, createdAt, device }]
+
+function galleryLoadFromStorage() {
+  try {
+    const g = JSON.parse(localStorage.getItem('tdd_gallery_v1')||'[]');
+    if (Array.isArray(g)) state.gallery = g;
+  } catch(e) {}
+}
+
+function galleryTakePhoto() {
+  document.getElementById('gallery-input').click();
+}
+
+let _galleryPendingSrc = null;
+let _galleryPendingAI  = null;
+
+function galleryHandlePhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 1400;
+      let w = img.width, h = img.height;
+      if (w>MAX||h>MAX) { if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      _galleryPendingSrc = canvas.toDataURL('image/jpeg',0.82);
+      _galleryPendingAI  = null;
+      document.getElementById('gallery-preview').src = _galleryPendingSrc;
+      document.getElementById('gallery-photo-title').value = '';
+      document.getElementById('gallery-ai-result').style.display = 'none';
+      document.getElementById('gallery-ai-loading').style.display = 'none';
+      document.getElementById('gallery-analysis-panel').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+async function galleryAnalyzeAI() {
+  if (!_galleryPendingSrc) return;
+  const keys = getApiKeys();
+  const provider = keys.claude?'claude': keys.gemini?'gemini': keys.openai?'openai': null;
+  if (!provider) {
+    showToast('Configura una API key en Config → IA');
+    closeDrawer('gallery'); openDrawer('settings'); return;
+  }
+  document.getElementById('gallery-ai-loading').style.display = 'flex';
+  document.getElementById('gallery-ai-result').style.display = 'none';
+
+  const prompt = `Eres un ingeniero experto en mantenimiento industrial de plantas desaladoras. Analiza esta imagen y proporciona:
+1. Tipo de equipo o elemento fotografiado
+2. Datos visibles en placa de características (fabricante, modelo, nº serie, potencia, presión, temperatura, caudal, año fabricación, etc.)
+3. Estado aparente (bueno, desgaste, daños, corrosión, fugas, suciedad, etc.)
+4. Observaciones relevantes para mantenimiento o auditoría técnica (TDD)
+5. Riesgos identificados si los hay
+Responde en español, estructurado y conciso.`;
+
+  try {
+    let text = '';
+    const b64 = _galleryPendingSrc.split(',')[1];
+    if (provider === 'claude') {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':keys.claude,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body: JSON.stringify({ model:'claude-opus-4-5', max_tokens:1024,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+            {type:'text',text:prompt}]}]})
+      });
+      const d = await r.json(); text = d.content?.[0]?.text || JSON.stringify(d);
+    } else if (provider === 'gemini') {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keys.gemini}`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({contents:[{parts:[{inline_data:{mime_type:'image/jpeg',data:b64}},{text:prompt}]}]})
+      });
+      const d = await r.json(); text = d.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(d);
+    } else if (provider === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/chat/completions',{
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+keys.openai},
+        body: JSON.stringify({model:'gpt-4o',max_tokens:1024,
+          messages:[{role:'user',content:[{type:'image_url',image_url:{url:_galleryPendingSrc}},{type:'text',text:prompt}]}]})
+      });
+      const d = await r.json(); text = d.choices?.[0]?.message?.content || JSON.stringify(d);
+    }
+    _galleryPendingAI = text;
+    document.getElementById('gallery-ai-text').textContent = text;
+    document.getElementById('gallery-ai-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('gallery-ai-text').textContent = 'Error: ' + e.message;
+    document.getElementById('gallery-ai-result').style.display = 'block';
+  }
+  document.getElementById('gallery-ai-loading').style.display = 'none';
+}
+
+function gallerySavePhoto() {
+  if (!_galleryPendingSrc) return;
+  const title = document.getElementById('gallery-photo-title').value.trim() || 'Fotografía '+(state.gallery.length+1);
+  state.gallery.push({
+    id: 'g_'+Date.now(), title,
+    src: _galleryPendingSrc,
+    aiResult: _galleryPendingAI || null,
+    createdAt: new Date().toISOString(),
+    device: getDeviceName()
+  });
+  _galleryPendingSrc = null; _galleryPendingAI = null;
+  document.getElementById('gallery-analysis-panel').style.display = 'none';
+  save(); renderGalleryGrid();
+  showToast('Fotografía guardada');
+}
+
+function galleryCancelPhoto() {
+  _galleryPendingSrc = null; _galleryPendingAI = null;
+  document.getElementById('gallery-analysis-panel').style.display = 'none';
+}
+
+function renderGalleryGrid() {
+  const grid  = document.getElementById('gallery-grid');
+  const count = document.getElementById('gallery-count');
+  if (!grid) return;
+  if (!state.gallery) state.gallery = [];
+  if (count) count.textContent = state.gallery.length;
+  if (!state.gallery.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Sin fotografías aún</div>';
+    return;
+  }
+  grid.innerHTML = state.gallery.map((p,i) => `
+    <div class="gallery-card" onclick="openGalleryLightbox(${i})">
+      <img class="gallery-img" src="${p.src}" alt="">
+      <div class="gallery-card-body">
+        <div class="gallery-card-title">${p.title}</div>
+        <div class="gallery-card-meta">${new Date(p.createdAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})} · ${p.device}</div>
+        ${p.aiResult?`<div class="gallery-card-ai">${p.aiResult.substring(0,80)}…</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openGalleryLightbox(idx) {
+  const p = state.gallery[idx]; if (!p) return;
+  const lb = document.getElementById('gallery-lightbox'); lb.style.display='flex';
+  document.getElementById('gallery-lightbox-img').src   = p.src;
+  document.getElementById('gallery-lightbox-title').textContent = p.title;
+  document.getElementById('gallery-lightbox-ai').textContent   = p.aiResult||'Sin análisis IA';
+  document.getElementById('gallery-lightbox-meta').textContent =
+    new Date(p.createdAt).toLocaleString('es-ES')+' · '+p.device;
+  document.getElementById('gallery-lightbox-del').onclick = () => {
+    if (!confirm('¿Eliminar esta fotografía?')) return;
+    state.gallery.splice(idx,1); save(); renderGalleryGrid(); closeGalleryLightbox();
+    showToast('Fotografía eliminada');
+  };
+}
+
+function closeGalleryLightbox() {
+  document.getElementById('gallery-lightbox').style.display='none';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadTheme();
+  initLoginScreen();
+  load();
+  galleryLoadFromStorage();
+  updateDriveSaveName();
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+  render();
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) { splash.style.opacity='0'; setTimeout(()=>splash.remove(),400); }
+  }, 1000);
+});
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(err=>console.error("SW registration failed:",err))})}</script>
+</body>
+</html>
