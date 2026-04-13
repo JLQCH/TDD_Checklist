@@ -704,7 +704,7 @@ body.light .drawer-input { background: var(--bg3); }
 <div class="drawer-overlay" id="drive-overlay" onclick="closeDrawer('drive')"></div>
 <div class="drawer" id="drive-drawer">
   <div class="drawer-header">
-    <div class="drawer-title">Sincronización Drive</div>
+    <div class="drawer-title">Sincronización Cloud</div>
     <button class="drawer-close" onclick="closeDrawer('drive')">✕</button>
   </div>
   <div class="drawer-body">
@@ -746,6 +746,49 @@ body.light .drawer-input { background: var(--bg3); }
       </button>
       <div id="drive-copies-list"><div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Pulsa actualizar para cargar copias</div></div>
     </div>
+
+    <div class="drawer-section" style="padding-top:10px;border-top:1px solid var(--border)">
+      <div class="drawer-label">Microsoft OneDrive personal</div>
+      <div id="onedrive-status" class="drive-status disconnected">
+        <div class="status-dot"></div>
+        <span id="onedrive-status-text">Configura antes el Client ID</span>
+      </div>
+      <button class="drawer-btn accent" id="onedrive-auth-btn" onclick="oneDriveAuth()">
+        <span class="drawer-btn-icon">☁️</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Conectar con Microsoft</div>
+          <div class="drawer-btn-sub" id="onedrive-config-hint">Requiere Client ID en Configuración</div>
+        </div>
+      </button>
+      <button class="drawer-btn" id="onedrive-disconnect-btn" onclick="oneDriveDisconnect()" style="display:none">
+        <span class="drawer-btn-icon">🔌</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Desconectar OneDrive</div>
+          <div class="drawer-btn-sub" id="onedrive-user-email">—</div>
+        </div>
+      </button>
+      <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
+        La copia se guarda en la carpeta privada de la app dentro de OneDrive.
+      </div>
+    </div>
+    <div class="drawer-section" id="onedrive-save-section" style="display:none">
+      <div class="drawer-label">Guardar copia en OneDrive</div>
+      <button class="drawer-btn ok" onclick="oneDriveSave()">
+        <span class="drawer-btn-icon">💾</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Guardar copia ahora</div>
+          <div class="drawer-btn-sub" id="onedrive-save-name">TDD_[dispositivo]_[fecha]_[hora].json</div>
+        </div>
+      </button>
+    </div>
+    <div class="drawer-section" id="onedrive-copies-section" style="display:none">
+      <div class="drawer-label">Copias guardadas <span id="onedrive-copies-count"></span></div>
+      <button class="drawer-btn" onclick="oneDriveListCopies()" style="margin-bottom:10px">
+        <span class="drawer-btn-icon">🔄</span>
+        <div class="drawer-btn-body"><div class="drawer-btn-title">Actualizar lista OneDrive</div></div>
+      </button>
+      <div id="onedrive-copies-list"><div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Pulsa actualizar para cargar copias</div></div>
+    </div>
   </div>
 </div>
 
@@ -766,12 +809,20 @@ body.light .drawer-input { background: var(--bg3); }
           <div class="drawer-btn-sub">Cámara trasera · Análisis IA disponible</div>
         </div>
       </button>
-      <input type="file" accept="image/*" capture="environment" id="gallery-input" style="display:none" onchange="galleryHandlePhoto(this)">
+      <button class="drawer-btn" onclick="galleryPickFromLibrary()">
+        <span class="drawer-btn-icon">🖼️</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Cargar desde galería</div>
+          <div class="drawer-btn-sub">Fototeca, archivos o imágenes guardadas</div>
+        </div>
+      </button>
+      <input type="file" accept="image/*" capture="environment" id="gallery-camera-input" style="display:none" onchange="galleryHandlePhoto(this)">
+      <input type="file" accept="image/*" id="gallery-library-input" style="display:none" onchange="galleryHandlePhoto(this)">
     </div>
     <!-- AI analysis panel (shown after taking a photo) -->
     <div id="gallery-analysis-panel" style="display:none">
       <div class="drawer-section">
-        <div class="drawer-label">Fotografía capturada</div>
+        <div class="drawer-label">Imagen seleccionada</div>
         <img id="gallery-preview" style="width:100%;border-radius:10px;margin-bottom:10px;border:1px solid var(--border2)" src="" alt="">
         <input class="drawer-input" type="text" id="gallery-photo-title" placeholder="Título o descripción (opcional)">
         <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -808,14 +859,17 @@ body.light .drawer-input { background: var(--bg3); }
 </div>
 
 <!-- Gallery lightbox -->
-<div id="gallery-lightbox" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.93);flex-direction:column;align-items:center;justify-content:center" onclick="closeGalleryLightbox()">
-  <button style="position:absolute;top:calc(var(--safe-top)+14px);right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;cursor:pointer;z-index:1" onclick="closeGalleryLightbox()">✕</button>
-  <img id="gallery-lightbox-img" style="max-width:96%;max-height:70dvh;border-radius:10px;object-fit:contain" src="" alt="">
-  <div id="gallery-lightbox-info" style="padding:16px 20px;max-width:92%;width:100%">
-    <div id="gallery-lightbox-title" style="font-family:var(--font-head);font-size:15px;font-weight:600;color:#fff;margin-bottom:6px"></div>
-    <div id="gallery-lightbox-ai" style="font-family:var(--font-body);font-size:13px;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:12px"></div>
-    <div id="gallery-lightbox-meta" style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.4)"></div>
-    <button id="gallery-lightbox-del" style="margin-top:12px;width:100%;padding:10px;border-radius:8px;border:1px solid rgba(231,76,60,0.5);background:rgba(231,76,60,0.1);color:#e74c3c;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Eliminar foto</button>
+<div id="gallery-lightbox" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.93);flex-direction:column;align-items:center;justify-content:center" onclick="if(event.target===this)closeGalleryLightbox()">
+  <button style="position:absolute;top:calc(var(--safe-top)+14px);right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;cursor:pointer;z-index:1" onclick="event.stopPropagation();closeGalleryLightbox()">✕</button>
+  <img id="gallery-lightbox-img" style="max-width:96%;max-height:58dvh;border-radius:10px;object-fit:contain" src="" alt="" onclick="event.stopPropagation()">
+  <div id="gallery-lightbox-info" style="padding:16px 20px;max-width:92%;width:100%" onclick="event.stopPropagation()">
+    <input id="gallery-lightbox-title-input" type="text" placeholder="Título o descripción" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-head);font-size:14px;font-weight:600;margin-bottom:8px;outline:none">
+    <textarea id="gallery-lightbox-ai-input" placeholder="Texto / observaciones / análisis IA" style="width:100%;min-height:120px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.88);font-family:var(--font-body);font-size:13px;line-height:1.5;resize:vertical;outline:none"></textarea>
+    <div id="gallery-lightbox-meta" style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.45);margin-top:10px"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="gallery-lightbox-save" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(62,184,240,0.45);background:rgba(62,184,240,0.12);color:#3eb8f0;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Guardar cambios</button>
+      <button id="gallery-lightbox-del" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(231,76,60,0.5);background:rgba(231,76,60,0.1);color:#e74c3c;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Eliminar foto</button>
+    </div>
   </div>
 </div>
 
@@ -872,6 +926,20 @@ body.light .drawer-input { background: var(--bg3); }
         <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
           Modelo: gpt-4o · Análisis visual avanzado.
         </div>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">Cloud · OneDrive</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px">
+        Microsoft Graph / OneDrive personal
+        <span class="api-status-badge" id="badge-onedrive">No configurado</span>
+      </div>
+      <div class="api-key-row">
+        <input class="drawer-input" type="text" id="onedrive-client-id" placeholder="Client ID de Microsoft" autocomplete="off">
+        <button class="api-save-btn" onclick="saveOneDriveClientId()">Guardar</button>
+      </div>
+      <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
+        Registra la app como SPA en Microsoft Entra, añade tu dominio de Netlify como Redirect URI y habilita cuentas personales de Microsoft.
       </div>
     </div>
     <div class="settings-group">
@@ -1195,17 +1263,21 @@ function renderItem(it) {
         <button class="iact flag" onclick="setItemState('${it.id}','flag')">Hallazgo</button>
         <button class="iact skip" onclick="setItemState('${it.id}','skip')">N/A</button>
         <button class="iact" onclick="toggleNote('${it.id}')">Nota</button>
-        <button class="iact" onclick="triggerPhoto('${it.id}')">&#128247; Foto</button>
+        <button class="iact" onclick="triggerPhoto('${it.id}','camera')">&#128247; Cámara</button>
+        <button class="iact" onclick="triggerPhoto('${it.id}','library')">🖼️ Galería</button>
       </div>
       <input type="file" accept="image/*" capture="environment"
-        class="photo-input" id="pi-${it.id}"
+        class="photo-input" id="pi-cam-${it.id}"
+        onchange="handlePhoto('${it.id}', this)">
+      <input type="file" accept="image/*"
+        class="photo-input" id="pi-lib-${it.id}"
         onchange="handlePhoto('${it.id}', this)">
       <textarea class="note-area${note ? ' visible' : ''}" id="note-${it.id}"
         placeholder="Observación, evidencia, referencia documental..."
         onchange="saveNote('${it.id}', this.value)">${note}</textarea>
       <div class="photo-strip${hasPhotos ? ' visible' : ''}" id="ps-${it.id}">
         ${photoThumbs}
-        <div class="photo-add-btn" onclick="triggerPhoto('${it.id}')">
+        <div class="photo-add-btn" onclick="triggerPhoto('${it.id}','library')">
           <div class="photo-add-icon">+</div>
           <div class="photo-add-lbl">Añadir</div>
         </div>
@@ -1236,8 +1308,9 @@ function saveNote(id, val) {
 }
 
 // ── PHOTOS ────────────────────────────────────────────────────────────────────
-function triggerPhoto(id) {
-  const input = document.getElementById('pi-' + id);
+function triggerPhoto(id, source = 'library') {
+  const inputId = source === 'camera' ? 'pi-cam-' + id : 'pi-lib-' + id;
+  const input = document.getElementById(inputId);
   if (input) input.click();
 }
 
@@ -2027,9 +2100,9 @@ function loadTheme() {
 function openDrawer(name) {
   document.getElementById(name+'-overlay').classList.add('open');
   document.getElementById(name+'-drawer').classList.add('open');
-  if (name === 'drive') { updateDriveSaveName(); }
+  if (name === 'drive') { updateDriveSaveName(); oneDriveTryRestore(); }
   if (name === 'gallery') { renderGalleryGrid(); }
-  if (name === 'settings') { loadApiKeyBadges(); }
+  if (name === 'settings') { loadApiKeyBadges(); loadOneDriveSettingsUI(); }
 }
 function closeDrawer(name) {
   document.getElementById(name+'-overlay').classList.remove('open');
@@ -2038,7 +2111,41 @@ function closeDrawer(name) {
 
 // ── SETTINGS — API KEYS ───────────────────────────────────────────────────────
 const API_KEY_STORE = 'tdd_apikeys_v1';
+const ONEDRIVE_SETTINGS_KEY = 'tdd_onedrive_settings_v1';
+const ONEDRIVE_SESSION_KEY  = 'tdd_onedrive_session_v1';
 let currentApiTab = 'claude';
+
+function getOneDriveSettings() {
+  try { return JSON.parse(localStorage.getItem(ONEDRIVE_SETTINGS_KEY)||'{}'); } catch(e) { return {}; }
+}
+
+function getOneDriveClientId() {
+  return (getOneDriveSettings().clientId || '').trim();
+}
+
+function saveOneDriveClientId() {
+  const input = document.getElementById('onedrive-client-id');
+  const val = input ? input.value.trim() : '';
+  const cfg = getOneDriveSettings();
+  if (val) cfg.clientId = val; else delete cfg.clientId;
+  localStorage.setItem(ONEDRIVE_SETTINGS_KEY, JSON.stringify(cfg));
+  loadOneDriveSettingsUI();
+  oneDriveSetConnectedUI(false);
+  showToast(val ? 'Client ID de OneDrive guardado' : 'Client ID de OneDrive eliminado');
+}
+
+function loadOneDriveSettingsUI() {
+  const val = getOneDriveClientId();
+  const input = document.getElementById('onedrive-client-id');
+  if (input) input.value = val;
+  const badge = document.getElementById('badge-onedrive');
+  if (badge) {
+    if (val) { badge.textContent = 'Configurado'; badge.className = 'api-status-badge set'; }
+    else { badge.textContent = 'No configurado'; badge.className = 'api-status-badge unset'; }
+  }
+  const hint = document.getElementById('onedrive-config-hint');
+  if (hint) hint.textContent = val ? 'Client ID configurado' : 'Requiere Client ID en Configuración';
+}
 
 function setApiTab(tab, btn) {
   currentApiTab = tab;
@@ -2078,6 +2185,10 @@ function saveCredentials() {
   showToast('Credenciales actualizadas. Tendrán efecto en el próximo inicio de sesión.');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
 // ── GOOGLE DRIVE ──────────────────────────────────────────────────────────────
 const DRIVE_CLIENT_ID = '1044776711458-pk53fqkjcg295nfmqifl1mdejfe1tas9.apps.googleusercontent.com';
 const DRIVE_SCOPES    = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
@@ -2099,8 +2210,11 @@ function updateDriveSaveName() {
   const now  = new Date();
   const date = now.toISOString().slice(0,10);
   const time = now.toTimeString().slice(0,5).replace(':','h');
-  const el   = document.getElementById('drive-save-name');
-  if (el) el.textContent = `TDD / ${getDeviceName()}_${date}_${time}.json`;
+  const filename = `TDD / ${getDeviceName()}_${date}_${time}.json`;
+  const elDrive = document.getElementById('drive-save-name');
+  const elOne   = document.getElementById('onedrive-save-name');
+  if (elDrive) elDrive.textContent = filename;
+  if (elOne) elOne.textContent = filename;
 }
 
 function driveSetStatus(state, text) {
@@ -2292,6 +2406,309 @@ async function driveDelete(fileId, fileName) {
   } catch(e) { showToast('Error: '+e.message); }
 }
 
+// ── ONEDRIVE PERSONAL ─────────────────────────────────────────────────────────
+const ONEDRIVE_SCOPES = ['openid','profile','offline_access','User.Read','Files.ReadWrite.AppFolder'];
+let oneDriveClient = null;
+let oneDriveClientIdCache = '';
+let oneDriveAccount = null;
+let oneDriveToken = null;
+let oneDriveAppFolderId = null;
+let oneDriveRestoreInFlight = false;
+let _galleryEditingIdx = null;
+
+function oneDriveSetStatus(state, text) {
+  const el = document.getElementById('onedrive-status');
+  const txt = document.getElementById('onedrive-status-text');
+  if (el) el.className = 'drive-status ' + state;
+  if (txt) txt.textContent = text;
+}
+
+function oneDriveSetConnectedUI(connected) {
+  const show = (id, yes) => { const el=document.getElementById(id); if(el) el.style.display=yes?'flex':'none'; };
+  const showB = (id, yes) => { const el=document.getElementById(id); if(el) el.style.display=yes?'block':'none'; };
+  show('onedrive-auth-btn', !connected);
+  show('onedrive-disconnect-btn', connected);
+  showB('onedrive-save-section', connected);
+  showB('onedrive-copies-section', connected);
+  if (connected) oneDriveSetStatus('connected', 'Conectado a OneDrive');
+  else oneDriveSetStatus('disconnected', getOneDriveClientId() ? 'No conectado a OneDrive' : 'Configura antes el Client ID');
+  loadOneDriveSettingsUI();
+}
+
+function initOneDriveClient() {
+  const clientId = getOneDriveClientId();
+  if (!window.msal || !window.msal.PublicClientApplication || !clientId) return null;
+  if (!oneDriveClient || oneDriveClientIdCache !== clientId) {
+    oneDriveClientIdCache = clientId;
+    oneDriveClient = new msal.PublicClientApplication({
+      auth: {
+        clientId,
+        authority: 'https://login.microsoftonline.com/consumers',
+        redirectUri: window.location.origin + window.location.pathname
+      },
+      cache: { cacheLocation: 'localStorage' }
+    });
+    oneDriveAccount = null;
+    oneDriveToken = null;
+    oneDriveAppFolderId = null;
+  }
+  return oneDriveClient;
+}
+
+async function oneDriveAcquireToken(interactive) {
+  const client = initOneDriveClient();
+  if (!client) return false;
+  if (!oneDriveAccount) oneDriveAccount = client.getAllAccounts()[0] || null;
+  if (!oneDriveAccount) {
+    if (!interactive) return false;
+    const loginResp = await client.loginPopup({ scopes: ONEDRIVE_SCOPES, prompt: 'select_account' });
+    oneDriveAccount = loginResp.account || client.getAllAccounts()[0] || null;
+  }
+  const req = { scopes: ONEDRIVE_SCOPES, account: oneDriveAccount };
+  let resp;
+  try {
+    resp = await client.acquireTokenSilent(req);
+  } catch(err) {
+    const needsInteraction = /interaction_required|login_required|consent_required/i.test(`${err?.errorCode||''} ${err?.name||''}`);
+    if (!interactive && !needsInteraction) throw err;
+    resp = await client.acquireTokenPopup(req);
+  }
+  oneDriveToken = resp.accessToken;
+  oneDriveAccount = resp.account || oneDriveAccount;
+  localStorage.setItem(ONEDRIVE_SESSION_KEY, '1');
+  return true;
+}
+
+async function oneDriveGraph(path, options={}) {
+  const ok = await oneDriveAcquireToken(false);
+  if (!ok || !oneDriveToken) throw new Error('Debes conectar OneDrive');
+  const headers = Object.assign({}, options.headers || {}, { Authorization: 'Bearer ' + oneDriveToken });
+  let body = options.body;
+  const isBlob = typeof Blob !== 'undefined' && body instanceof Blob;
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body && !isBlob && !isFormData && typeof body !== 'string') {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    body = JSON.stringify(body);
+  }
+  const doFetch = async () => fetch('https://graph.microsoft.com/v1.0' + path, {
+    method: options.method || 'GET',
+    headers,
+    body
+  });
+  let resp = await doFetch();
+  if (resp.status === 401) {
+    await oneDriveAcquireToken(true);
+    headers.Authorization = 'Bearer ' + oneDriveToken;
+    resp = await doFetch();
+  }
+  if (!resp.ok) {
+    let msg = resp.status + '';
+    try {
+      const err = await resp.json();
+      msg = err.error?.message || err.error?.code || msg;
+    } catch(_) {}
+    throw new Error(msg);
+  }
+  return resp;
+}
+
+async function oneDriveFetchUser() {
+  try {
+    const r = await oneDriveGraph('/me?$select=displayName,mail,userPrincipalName');
+    const info = await r.json();
+    const label = info.mail || info.userPrincipalName || info.displayName || 'Microsoft conectado';
+    const el = document.getElementById('onedrive-user-email');
+    if (el) el.textContent = label;
+    return info;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function oneDriveEnsureAppFolder() {
+  if (oneDriveAppFolderId) return oneDriveAppFolderId;
+  const r = await oneDriveGraph('/me/drive/special/approot?$select=id,name,webUrl');
+  const data = await r.json();
+  oneDriveAppFolderId = data.id;
+  return data.id;
+}
+
+async function oneDriveAuth() {
+  if (!getOneDriveClientId()) {
+    showToast('Configura primero el Client ID de OneDrive');
+    closeDrawer('drive');
+    openDrawer('settings');
+    return;
+  }
+  if (!window.msal || !window.msal.PublicClientApplication) {
+    showToast('Microsoft aún no está cargado, prueba en unos segundos');
+    return;
+  }
+  oneDriveSetStatus('loading', 'Conectando con OneDrive…');
+  try {
+    await oneDriveAcquireToken(true);
+    await oneDriveFetchUser();
+    await oneDriveEnsureAppFolder();
+    oneDriveSetConnectedUI(true);
+    await oneDriveListCopies();
+    showToast('✓ Conectado a OneDrive');
+  } catch(e) {
+    oneDriveSetConnectedUI(false);
+    showToast('Error de OneDrive: ' + (e.message || e));
+  }
+}
+
+function oneDriveDisconnect() {
+  localStorage.removeItem(ONEDRIVE_SESSION_KEY);
+  oneDriveAccount = null;
+  oneDriveToken = null;
+  oneDriveAppFolderId = null;
+  const list = document.getElementById('onedrive-copies-list');
+  if (list) list.innerHTML = '<div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Pulsa actualizar para cargar copias</div>';
+  const count = document.getElementById('onedrive-copies-count');
+  if (count) count.textContent = '';
+  oneDriveSetConnectedUI(false);
+  showToast('OneDrive desconectado en la app');
+}
+
+async function oneDriveSave() {
+  if (!await oneDriveAcquireToken(true)) {
+    showToast('Conecta primero con OneDrive');
+    return;
+  }
+  oneDriveSetStatus('loading', 'Guardando copia en OneDrive…');
+  const now  = new Date();
+  const date = now.toISOString().slice(0,10);
+  const time = now.toTimeString().slice(0,5).replace(':','h');
+  const dev  = getDeviceName();
+  const filename = `${dev}_${date}_${time}.json`;
+  const snapshot = {
+    version: 4,
+    savedAt: now.toISOString(),
+    device: dev,
+    items: state.items,
+    notes: state.notes,
+    photos: state.photos,
+    gallery: state.gallery
+  };
+  try {
+    await oneDriveEnsureAppFolder();
+    await oneDriveGraph(`/me/drive/special/approot:/${encodeURIComponent(filename)}:/content`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(snapshot)
+    });
+    showToast('✓ Copia guardada en OneDrive');
+    await oneDriveListCopies();
+  } catch(e) {
+    showToast('Error de OneDrive: ' + e.message);
+  }
+  oneDriveSetConnectedUI(true);
+}
+
+async function oneDriveListCopies() {
+  if (!await oneDriveAcquireToken(false)) return;
+  oneDriveSetStatus('loading', 'Cargando lista OneDrive…');
+  try {
+    await oneDriveEnsureAppFolder();
+    const r = await oneDriveGraph('/me/drive/special/approot/children?$select=id,name,size,createdDateTime,lastModifiedDateTime');
+    const d = await r.json();
+    const files = (d.value || []).filter(f => /\.json$/i.test(f.name)).sort((a,b) => new Date(b.createdDateTime || b.lastModifiedDateTime) - new Date(a.createdDateTime || a.lastModifiedDateTime));
+    const countEl = document.getElementById('onedrive-copies-count');
+    if (countEl) countEl.textContent = `(${files.length})`;
+    const list = document.getElementById('onedrive-copies-list');
+    if (!list) return;
+    if (!files.length) {
+      list.innerHTML = '<div style="text-align:center;padding:16px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Sin copias guardadas</div>';
+    } else {
+      list.innerHTML = files.map(f => {
+        const dt = new Date(f.createdDateTime || f.lastModifiedDateTime || Date.now());
+        const ds = dt.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+        const ts = dt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        const kb = f.size ? Math.round(f.size/1024)+' KB' : '';
+        const dev = f.name.replace('.json','').split('_')[0] || '';
+        return `<div class="copy-item">
+          <div class="copy-name">${escapeHtml(f.name)}</div>
+          <div class="copy-meta">${ds} · ${ts}${kb?' · '+kb:''}${dev?' · '+escapeHtml(dev):''}</div>
+          <div class="copy-actions">
+            <button class="copy-btn load" onclick="oneDriveLoad('${f.id}','${escapeHtml(f.name)}')">Cargar</button>
+            <button class="copy-btn del" onclick="oneDriveDelete('${f.id}','${escapeHtml(f.name)}')">Borrar</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    await oneDriveFetchUser();
+    oneDriveSetConnectedUI(true);
+  } catch(e) {
+    showToast('Error al listar OneDrive: ' + e.message);
+    oneDriveSetConnectedUI(false);
+  }
+}
+
+async function oneDriveLoad(fileId, fileName) {
+  if (!confirm(`¿Cargar "${fileName}" desde OneDrive?
+Se sobreescribirá TODO el estado local (checklist, notas, fotos, galería).`)) return;
+  oneDriveSetStatus('loading', 'Cargando copia OneDrive…');
+  try {
+    const r = await oneDriveGraph(`/me/drive/items/${fileId}/content`);
+    const d = await r.json();
+    if (d.items)   Object.assign(state.items, d.items);
+    if (d.notes)   Object.assign(state.notes, d.notes);
+    if (d.photos)  Object.assign(state.photos, d.photos);
+    if (d.gallery && Array.isArray(d.gallery)) state.gallery = d.gallery;
+    save();
+    render();
+    renderGalleryGrid();
+    showToast('✓ Copia cargada desde OneDrive');
+    closeDrawer('drive');
+  } catch(e) {
+    showToast('Error al cargar OneDrive: ' + e.message);
+  }
+  oneDriveSetConnectedUI(true);
+}
+
+async function oneDriveDelete(fileId, fileName) {
+  if (!confirm(`¿Eliminar "${fileName}" de OneDrive?
+Esta acción no se puede deshacer.`)) return;
+  try {
+    await oneDriveGraph(`/me/drive/items/${fileId}`, { method: 'DELETE' });
+    showToast('Copia eliminada de OneDrive');
+    await oneDriveListCopies();
+  } catch(e) {
+    showToast('Error al eliminar en OneDrive: ' + e.message);
+  }
+}
+
+async function oneDriveTryRestore() {
+  if (oneDriveRestoreInFlight) return;
+  if (!localStorage.getItem(ONEDRIVE_SESSION_KEY)) { oneDriveSetConnectedUI(false); return; }
+  if (!getOneDriveClientId()) { oneDriveSetConnectedUI(false); return; }
+  if (!window.msal || !window.msal.PublicClientApplication) return;
+  oneDriveRestoreInFlight = true;
+  try {
+    const client = initOneDriveClient();
+    if (!client) { oneDriveSetConnectedUI(false); return; }
+    oneDriveAccount = client.getAllAccounts()[0] || null;
+    if (!oneDriveAccount) {
+      localStorage.removeItem(ONEDRIVE_SESSION_KEY);
+      oneDriveSetConnectedUI(false);
+      return;
+    }
+    const ok = await oneDriveAcquireToken(false);
+    if (!ok) {
+      oneDriveSetConnectedUI(false);
+      return;
+    }
+    await oneDriveFetchUser();
+    await oneDriveEnsureAppFolder();
+    oneDriveSetConnectedUI(true);
+  } catch(e) {
+    oneDriveSetConnectedUI(false);
+  } finally {
+    oneDriveRestoreInFlight = false;
+  }
+}
+
 // ── GALLERY ───────────────────────────────────────────────────────────────────
 // state.gallery = [{ id, title, src, aiResult, createdAt, device }]
 
@@ -2303,7 +2720,11 @@ function galleryLoadFromStorage() {
 }
 
 function galleryTakePhoto() {
-  document.getElementById('gallery-input').click();
+  document.getElementById('gallery-camera-input').click();
+}
+
+function galleryPickFromLibrary() {
+  document.getElementById('gallery-library-input').click();
 }
 
 let _galleryPendingSrc = null;
@@ -2426,30 +2847,49 @@ function renderGalleryGrid() {
     <div class="gallery-card" onclick="openGalleryLightbox(${i})">
       <img class="gallery-img" src="${p.src}" alt="">
       <div class="gallery-card-body">
-        <div class="gallery-card-title">${p.title}</div>
-        <div class="gallery-card-meta">${new Date(p.createdAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})} · ${p.device}</div>
-        ${p.aiResult?`<div class="gallery-card-ai">${p.aiResult.substring(0,80)}…</div>`:''}
+        <div class="gallery-card-title">${escapeHtml(p.title || 'Sin título')}</div>
+        <div class="gallery-card-meta">${new Date(p.createdAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short'})} · ${escapeHtml(p.device || 'Dispositivo')}</div>
+        ${p.aiResult?`<div class="gallery-card-ai">${escapeHtml(p.aiResult.substring(0,80))}…</div>`:''}
       </div>
     </div>`).join('');
 }
 
 function openGalleryLightbox(idx) {
   const p = state.gallery[idx]; if (!p) return;
-  const lb = document.getElementById('gallery-lightbox'); lb.style.display='flex';
-  document.getElementById('gallery-lightbox-img').src   = p.src;
-  document.getElementById('gallery-lightbox-title').textContent = p.title;
-  document.getElementById('gallery-lightbox-ai').textContent   = p.aiResult||'Sin análisis IA';
+  _galleryEditingIdx = idx;
+  const lb = document.getElementById('gallery-lightbox');
+  lb.style.display='flex';
+  document.getElementById('gallery-lightbox-img').src = p.src;
+  document.getElementById('gallery-lightbox-title-input').value = p.title || '';
+  document.getElementById('gallery-lightbox-ai-input').value = p.aiResult || '';
   document.getElementById('gallery-lightbox-meta').textContent =
-    new Date(p.createdAt).toLocaleString('es-ES')+' · '+p.device;
+    new Date(p.createdAt).toLocaleString('es-ES')+' · '+(p.device || 'Dispositivo');
+  document.getElementById('gallery-lightbox-save').onclick = () => gallerySaveCurrentEdit();
   document.getElementById('gallery-lightbox-del').onclick = () => {
     if (!confirm('¿Eliminar esta fotografía?')) return;
-    state.gallery.splice(idx,1); save(); renderGalleryGrid(); closeGalleryLightbox();
+    state.gallery.splice(idx,1);
+    save();
+    renderGalleryGrid();
+    closeGalleryLightbox();
     showToast('Fotografía eliminada');
   };
 }
 
+function gallerySaveCurrentEdit() {
+  if (_galleryEditingIdx === null || !state.gallery[_galleryEditingIdx]) return;
+  const item = state.gallery[_galleryEditingIdx];
+  const title = document.getElementById('gallery-lightbox-title-input').value.trim();
+  const ai = document.getElementById('gallery-lightbox-ai-input').value.trim();
+  item.title = title || `Fotografía ${_galleryEditingIdx + 1}`;
+  item.aiResult = ai || null;
+  save();
+  renderGalleryGrid();
+  showToast('Texto actualizado');
+}
+
 function closeGalleryLightbox() {
   document.getElementById('gallery-lightbox').style.display='none';
+  _galleryEditingIdx = null;
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -2459,6 +2899,8 @@ window.addEventListener('DOMContentLoaded', () => {
   load();
   galleryLoadFromStorage();
   updateDriveSaveName();
+  loadOneDriveSettingsUI();
+  oneDriveSetConnectedUI(false);
   document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
   render();
   setTimeout(() => {
@@ -2466,8 +2908,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (splash) { splash.style.opacity='0'; setTimeout(()=>splash.remove(),400); }
   }, 1000);
 });
+window.addEventListener('load', () => {
+  setTimeout(() => { oneDriveTryRestore(); }, 600);
+});
 </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js" async defer></script>
 <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(err=>console.error("SW registration failed:",err))})}</script>
 </body>
 </html>

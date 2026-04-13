@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tdd-check-v2';
+const CACHE_NAME = 'tdd-check-v4';
 const APP_SHELL = [
   '/',
   '/index.html',
