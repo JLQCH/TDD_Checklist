@@ -767,6 +767,13 @@ body.light .drawer-input { background: var(--bg3); }
           <div class="drawer-btn-sub" id="onedrive-user-email">—</div>
         </div>
       </button>
+      <button class="drawer-btn" id="onedrive-test-drive-btn" onclick="oneDriveTestConnection()" style="display:none">
+        <span class="drawer-btn-icon">🧪</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Probar conexión</div>
+          <div class="drawer-btn-sub" id="onedrive-test-drive-result">Comprueba token y carpeta de la app</div>
+        </div>
+      </button>
       <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
         La copia se guarda en la carpeta privada de la app dentro de OneDrive.
       </div>
@@ -938,7 +945,14 @@ body.light .drawer-input { background: var(--bg3); }
         <input class="drawer-input" type="text" id="onedrive-client-id" placeholder="Client ID de Microsoft" autocomplete="off">
         <button class="api-save-btn" onclick="saveOneDriveClientId()">Guardar</button>
       </div>
-      <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
+      <button class="drawer-btn" id="onedrive-test-btn" onclick="oneDriveTestConnection()" style="margin-top:8px">
+        <span class="drawer-btn-icon">🔌</span>
+        <div class="drawer-btn-body">
+          <div class="drawer-btn-title">Probar conexión OneDrive</div>
+          <div class="drawer-btn-sub" id="onedrive-test-result">Verifica autenticación y acceso a la carpeta</div>
+        </div>
+      </button>
+      <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5;margin-top:8px">
         Registra la app como SPA en Microsoft Entra, añade tu dominio de Netlify como Redirect URI y habilita cuentas personales de Microsoft.
       </div>
     </div>
@@ -2428,6 +2442,7 @@ function oneDriveSetConnectedUI(connected) {
   const showB = (id, yes) => { const el=document.getElementById(id); if(el) el.style.display=yes?'block':'none'; };
   show('onedrive-auth-btn', !connected);
   show('onedrive-disconnect-btn', connected);
+  show('onedrive-test-drive-btn', connected);
   showB('onedrive-save-section', connected);
   showB('onedrive-copies-section', connected);
   if (connected) oneDriveSetStatus('connected', 'Conectado a OneDrive');
@@ -2569,6 +2584,77 @@ function oneDriveDisconnect() {
   if (count) count.textContent = '';
   oneDriveSetConnectedUI(false);
   showToast('OneDrive desconectado en la app');
+}
+
+async function oneDriveTestConnection() {
+  const clientId = getOneDriveClientId();
+  const setResult = (msg, ok) => {
+    const color = ok === true ? 'var(--ok)' : ok === false ? 'var(--danger)' : 'var(--accent)';
+    ['onedrive-test-result','onedrive-test-drive-result'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = msg; el.style.color = color; }
+    });
+  };
+
+  if (!clientId) {
+    setResult('⚠ Sin Client ID — configúralo primero', false);
+    showToast('Configura el Client ID de OneDrive');
+    return;
+  }
+  if (!window.msal || !window.msal.PublicClientApplication) {
+    setResult('⚠ MSAL aún no cargado, espera unos segundos', false);
+    showToast('La librería de Microsoft aún no está cargada');
+    return;
+  }
+
+  setResult('⏳ Conectando…', null);
+  oneDriveSetStatus('loading', 'Probando conexión…');
+
+  try {
+    // Step 1: token
+    const tokenOk = await oneDriveAcquireToken(true);
+    if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener token');
+    setResult('⏳ Token OK · verificando usuario…', null);
+
+    // Step 2: user info
+    const userInfo = await oneDriveFetchUser();
+    const userName = userInfo
+      ? (userInfo.mail || userInfo.userPrincipalName || userInfo.displayName || 'usuario OK')
+      : '(nombre no disponible)';
+    setResult('⏳ Usuario OK · verificando carpeta…', null);
+
+    // Step 3: app folder
+    const folderId = await oneDriveEnsureAppFolder();
+    if (!folderId) throw new Error('No se pudo obtener la carpeta de la app');
+
+    // Step 4: write/read test file
+    setResult('⏳ Carpeta OK · probando escritura…', null);
+    const testFilename = '_tdd_test_connection.json';
+    const testPayload = JSON.stringify({ test: true, ts: Date.now() });
+    await oneDriveGraph(`/me/drive/special/approot:/${encodeURIComponent(testFilename)}:/content`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: testPayload
+    });
+
+    // Step 5: delete test file
+    try {
+      await oneDriveGraph(`/me/drive/special/approot:/${encodeURIComponent(testFilename)}`, { method: 'DELETE' });
+    } catch(_) { /* best effort */ }
+
+    // All OK
+    const msg = `✓ Conexión OK · ${userName}`;
+    setResult(msg, true);
+    oneDriveSetConnectedUI(true);
+    showToast(msg);
+
+  } catch(e) {
+    const errMsg = e.message || String(e);
+    const displayMsg = `✗ Error: ${errMsg}`;
+    setResult(displayMsg, false);
+    showToast('OneDrive: ' + errMsg);
+    oneDriveSetStatus('disconnected', 'Error al probar conexión');
+  }
 }
 
 async function oneDriveSave() {
