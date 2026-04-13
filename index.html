@@ -597,6 +597,7 @@ body.light .drawer-input { background: var(--bg3); }
 .api-status-badge.set { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(39,174,96,0.3); }
 .api-status-badge.unset { background: var(--bg4); color: var(--text3); }
 </style>
+<script src="https://alcdn.msauth.net/browser/3.27.0/js/msal-browser.min.js"></script>
 </head>
 <body>
 
@@ -2588,70 +2589,81 @@ function oneDriveDisconnect() {
 
 async function oneDriveTestConnection() {
   const clientId = getOneDriveClientId();
-  const setResult = (msg, ok) => {
-    const color = ok === true ? 'var(--ok)' : ok === false ? 'var(--danger)' : 'var(--accent)';
-    ['onedrive-test-result','onedrive-test-drive-result'].forEach(id => {
+  const setResult = (msg, state) => {
+    // state: 'ok' | 'error' | 'loading'
+    const color = state === 'ok' ? 'var(--ok)' : state === 'error' ? 'var(--danger)' : 'var(--accent)';
+    ['onedrive-test-result', 'onedrive-test-drive-result'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.textContent = msg; el.style.color = color; }
     });
   };
 
   if (!clientId) {
-    setResult('⚠ Sin Client ID — configúralo primero', false);
+    setResult('⚠ Sin Client ID — configúralo primero', 'error');
     showToast('Configura el Client ID de OneDrive');
     return;
   }
+
+  // Esperar hasta 5 s a que MSAL cargue (puede tardar si la red es lenta)
   if (!window.msal || !window.msal.PublicClientApplication) {
-    setResult('⚠ MSAL aún no cargado, espera unos segundos', false);
-    showToast('La librería de Microsoft aún no está cargada');
-    return;
+    setResult('⏳ Cargando librería Microsoft…', 'loading');
+    try {
+      await new Promise((resolve, reject) => {
+        let tries = 0;
+        const id = setInterval(() => {
+          tries++;
+          if (window.msal && window.msal.PublicClientApplication) { clearInterval(id); resolve(); }
+          else if (tries >= 50) { clearInterval(id); reject(new Error('No se cargó la librería MSAL. Comprueba tu conexión a Internet.')); }
+        }, 100);
+      });
+    } catch(e) {
+      setResult('✗ ' + e.message, 'error');
+      showToast(e.message);
+      return;
+    }
   }
 
-  setResult('⏳ Conectando…', null);
-  oneDriveSetStatus('loading', 'Probando conexión…');
+  setResult('⏳ Conectando con Microsoft…', 'loading');
 
   try {
-    // Step 1: token
+    // Paso 1: token
     const tokenOk = await oneDriveAcquireToken(true);
-    if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener token');
-    setResult('⏳ Token OK · verificando usuario…', null);
+    if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener el token de acceso');
+    setResult('⏳ Token OK · verificando usuario…', 'loading');
 
-    // Step 2: user info
+    // Paso 2: usuario
     const userInfo = await oneDriveFetchUser();
     const userName = userInfo
       ? (userInfo.mail || userInfo.userPrincipalName || userInfo.displayName || 'usuario OK')
       : '(nombre no disponible)';
-    setResult('⏳ Usuario OK · verificando carpeta…', null);
+    setResult('⏳ Usuario OK · verificando carpeta…', 'loading');
 
-    // Step 3: app folder
+    // Paso 3: carpeta de la app
     const folderId = await oneDriveEnsureAppFolder();
-    if (!folderId) throw new Error('No se pudo obtener la carpeta de la app');
+    if (!folderId) throw new Error('No se pudo acceder a la carpeta de la app en OneDrive');
+    setResult('⏳ Carpeta OK · probando escritura…', 'loading');
 
-    // Step 4: write/read test file
-    setResult('⏳ Carpeta OK · probando escritura…', null);
+    // Paso 4: escritura de prueba
     const testFilename = '_tdd_test_connection.json';
-    const testPayload = JSON.stringify({ test: true, ts: Date.now() });
-    await oneDriveGraph(`/me/drive/special/approot:/${encodeURIComponent(testFilename)}:/content`, {
+    await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFilename) + ':/content', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: testPayload
+      body: JSON.stringify({ test: true, ts: Date.now() })
     });
 
-    // Step 5: delete test file
+    // Paso 5: borrar fichero de prueba
     try {
-      await oneDriveGraph(`/me/drive/special/approot:/${encodeURIComponent(testFilename)}`, { method: 'DELETE' });
+      await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFilename), { method: 'DELETE' });
     } catch(_) { /* best effort */ }
 
-    // All OK
-    const msg = `✓ Conexión OK · ${userName}`;
-    setResult(msg, true);
+    const msg = '✓ Conexión OK · ' + userName;
+    setResult(msg, 'ok');
     oneDriveSetConnectedUI(true);
     showToast(msg);
 
   } catch(e) {
     const errMsg = e.message || String(e);
-    const displayMsg = `✗ Error: ${errMsg}`;
-    setResult(displayMsg, false);
+    setResult('✗ Error: ' + errMsg, 'error');
     showToast('OneDrive: ' + errMsg);
     oneDriveSetStatus('disconnected', 'Error al probar conexión');
   }
@@ -2999,7 +3011,7 @@ window.addEventListener('load', () => {
 });
 </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js" async defer></script>
+
 <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(err=>console.error("SW registration failed:",err))})}</script>
 </body>
 </html>
