@@ -597,7 +597,7 @@ body.light .drawer-input { background: var(--bg3); }
 .api-status-badge.set { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(39,174,96,0.3); }
 .api-status-badge.unset { background: var(--bg4); color: var(--text3); }
 </style>
-<script>/* MSAL Browser 3.30.0 — inline, sin dependencia de CDN */
+<script>/* MSAL Browser 3.30.0 — inline */
 /*! @azure/msal-browser v3.30.0 2025-08-05 */
 "use strict";!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).msal={})}(this,(function(e){
 /*! @azure/msal-common v14.16.1 2025-08-05 */
@@ -2519,7 +2519,7 @@ function oneDriveSetConnectedUI(connected) {
   loadOneDriveSettingsUI();
 }
 
-function initOneDriveClient() {
+async function initOneDriveClient() {
   const clientId = getOneDriveClientId();
   if (!window.msal || !window.msal.PublicClientApplication || !clientId) return null;
   if (!oneDriveClient || oneDriveClientIdCache !== clientId) {
@@ -2532,6 +2532,8 @@ function initOneDriveClient() {
       },
       cache: { cacheLocation: 'localStorage' }
     });
+    // MSAL 3.x requiere initialize() antes de cualquier otra llamada
+    await oneDriveClient.initialize();
     oneDriveAccount = null;
     oneDriveToken = null;
     oneDriveAppFolderId = null;
@@ -2540,7 +2542,7 @@ function initOneDriveClient() {
 }
 
 async function oneDriveAcquireToken(interactive) {
-  const client = initOneDriveClient();
+  const client = await initOneDriveClient();
   if (!client) return false;
   if (!oneDriveAccount) oneDriveAccount = client.getAllAccounts()[0] || null;
   if (!oneDriveAccount) {
@@ -2644,6 +2646,8 @@ async function oneDriveAuth() {
 
 function oneDriveDisconnect() {
   localStorage.removeItem(ONEDRIVE_SESSION_KEY);
+  oneDriveClient = null;
+  oneDriveClientIdCache = '';
   oneDriveAccount = null;
   oneDriveToken = null;
   oneDriveAppFolderId = null;
@@ -2676,10 +2680,9 @@ async function oneDriveTestConnection() {
     return;
   }
 
-  setResult('⏳ Conectando con Microsoft…', 'loading');
-
+  setResult('⏳ Inicializando cliente MSAL…', 'loading');
   try {
-    // Paso 1: token
+    // Paso 1: token (initOneDriveClient ya llama a initialize())
     const tokenOk = await oneDriveAcquireToken(true);
     if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener el token de acceso');
     setResult('⏳ Token OK · verificando usuario…', 'loading');
@@ -2704,7 +2707,7 @@ async function oneDriveTestConnection() {
       body: JSON.stringify({ test: true, ts: Date.now() })
     });
 
-    // Paso 5: borrar fichero de prueba (best effort)
+    // Paso 5: borrar fichero de prueba
     try {
       await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFilename), { method: 'DELETE' });
     } catch(_) {}
@@ -2837,7 +2840,7 @@ async function oneDriveTryRestore() {
   if (!window.msal || !window.msal.PublicClientApplication) return;
   oneDriveRestoreInFlight = true;
   try {
-    const client = initOneDriveClient();
+    const client = await initOneDriveClient();
     if (!client) { oneDriveSetConnectedUI(false); return; }
     oneDriveAccount = client.getAllAccounts()[0] || null;
     if (!oneDriveAccount) {
