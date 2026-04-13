@@ -826,7 +826,7 @@ class En{constructor(e,t,r,n,o,i,a,s){this.canonicalAuthority=e,this._canonicalA
         <span class="drawer-btn-icon">☁️</span>
         <div class="drawer-btn-body">
           <div class="drawer-btn-title">Conectar con Microsoft</div>
-          <div class="drawer-btn-sub" id="onedrive-config-hint">Requiere Client ID en Configuración</div>
+
         </div>
       </button>
       <button class="drawer-btn" id="onedrive-disconnect-btn" onclick="oneDriveDisconnect()" style="display:none">
@@ -1004,27 +1004,7 @@ class En{constructor(e,t,r,n,o,i,a,s){this.canonicalAuthority=e,this._canonicalA
         </div>
       </div>
     </div>
-    <div class="settings-group">
-      <div class="settings-group-title">Cloud · OneDrive</div>
-      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px">
-        Microsoft Graph / OneDrive personal
-        <span class="api-status-badge" id="badge-onedrive">No configurado</span>
-      </div>
-      <div class="api-key-row">
-        <input class="drawer-input" type="text" id="onedrive-client-id" placeholder="Client ID de Microsoft" autocomplete="off">
-        <button class="api-save-btn" onclick="saveOneDriveClientId()">Guardar</button>
-      </div>
-      <button class="drawer-btn" id="onedrive-test-btn" onclick="oneDriveTestConnection()" style="margin-top:8px">
-        <span class="drawer-btn-icon">🔌</span>
-        <div class="drawer-btn-body">
-          <div class="drawer-btn-title">Probar conexión OneDrive</div>
-          <div class="drawer-btn-sub" id="onedrive-test-result">Verifica autenticación y acceso a la carpeta</div>
-        </div>
-      </button>
-      <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5;margin-top:8px">
-        Registra la app como SPA en Microsoft Entra, añade tu dominio de Netlify como Redirect URI y habilita cuentas personales de Microsoft.
-      </div>
-    </div>
+
     <div class="settings-group">
       <div class="settings-group-title">Sesión y datos</div>
       <button class="drawer-btn danger" onclick="if(confirm('¿Cerrar sesión?')){sessionStorage.clear();location.reload()}">
@@ -2185,7 +2165,7 @@ function openDrawer(name) {
   document.getElementById(name+'-drawer').classList.add('open');
   if (name === 'drive') { updateDriveSaveName(); oneDriveTryRestore(); }
   if (name === 'gallery') { renderGalleryGrid(); }
-  if (name === 'settings') { loadApiKeyBadges(); loadOneDriveSettingsUI(); }
+  if (name === 'settings') { loadApiKeyBadges(); }
 }
 function closeDrawer(name) {
   document.getElementById(name+'-overlay').classList.remove('open');
@@ -2194,40 +2174,16 @@ function closeDrawer(name) {
 
 // ── SETTINGS — API KEYS ───────────────────────────────────────────────────────
 const API_KEY_STORE = 'tdd_apikeys_v1';
-const ONEDRIVE_SETTINGS_KEY = 'tdd_onedrive_settings_v1';
+const ONEDRIVE_CLIENT_ID    = 'ce9ca9ed-e161-4752-bb7a-3fcc17ae5575';
 const ONEDRIVE_SESSION_KEY  = 'tdd_onedrive_session_v1';
 let currentApiTab = 'claude';
 
-function getOneDriveSettings() {
-  try { return JSON.parse(localStorage.getItem(ONEDRIVE_SETTINGS_KEY)||'{}'); } catch(e) { return {}; }
-}
-
 function getOneDriveClientId() {
-  return (getOneDriveSettings().clientId || '').trim();
-}
-
-function saveOneDriveClientId() {
-  const input = document.getElementById('onedrive-client-id');
-  const val = input ? input.value.trim() : '';
-  const cfg = getOneDriveSettings();
-  if (val) cfg.clientId = val; else delete cfg.clientId;
-  localStorage.setItem(ONEDRIVE_SETTINGS_KEY, JSON.stringify(cfg));
-  loadOneDriveSettingsUI();
-  oneDriveSetConnectedUI(false);
-  showToast(val ? 'Client ID de OneDrive guardado' : 'Client ID de OneDrive eliminado');
+  return ONEDRIVE_CLIENT_ID;
 }
 
 function loadOneDriveSettingsUI() {
-  const val = getOneDriveClientId();
-  const input = document.getElementById('onedrive-client-id');
-  if (input) input.value = val;
-  const badge = document.getElementById('badge-onedrive');
-  if (badge) {
-    if (val) { badge.textContent = 'Configurado'; badge.className = 'api-status-badge set'; }
-    else { badge.textContent = 'No configurado'; badge.className = 'api-status-badge unset'; }
-  }
-  const hint = document.getElementById('onedrive-config-hint');
-  if (hint) hint.textContent = val ? 'Client ID configurado' : 'Requiere Client ID en Configuración';
+  // Client ID embebido — sin configuración manual necesaria
 }
 
 function setApiTab(tab, btn) {
@@ -2515,24 +2471,20 @@ function oneDriveSetConnectedUI(connected) {
   showB('onedrive-save-section', connected);
   showB('onedrive-copies-section', connected);
   if (connected) oneDriveSetStatus('connected', 'Conectado a OneDrive');
-  else oneDriveSetStatus('disconnected', getOneDriveClientId() ? 'No conectado a OneDrive' : 'Configura antes el Client ID');
-  loadOneDriveSettingsUI();
+  else oneDriveSetStatus('disconnected', 'No conectado a OneDrive');
 }
 
 async function initOneDriveClient() {
-  const clientId = getOneDriveClientId();
-  if (!window.msal || !window.msal.PublicClientApplication || !clientId) return null;
-  if (!oneDriveClient || oneDriveClientIdCache !== clientId) {
-    oneDriveClientIdCache = clientId;
+  if (!window.msal || !window.msal.PublicClientApplication) return null;
+  if (!oneDriveClient) {
     oneDriveClient = new msal.PublicClientApplication({
       auth: {
-        clientId,
+        clientId: ONEDRIVE_CLIENT_ID,
         authority: 'https://login.microsoftonline.com/consumers',
         redirectUri: window.location.origin + window.location.pathname
       },
       cache: { cacheLocation: 'localStorage' }
     });
-    // MSAL 3.x requiere initialize() antes de cualquier otra llamada
     await oneDriveClient.initialize();
     oneDriveAccount = null;
     oneDriveToken = null;
@@ -2620,12 +2572,6 @@ async function oneDriveEnsureAppFolder() {
 }
 
 async function oneDriveAuth() {
-  if (!getOneDriveClientId()) {
-    showToast('Configura primero el Client ID de OneDrive');
-    closeDrawer('drive');
-    openDrawer('settings');
-    return;
-  }
   if (!window.msal || !window.msal.PublicClientApplication) {
     showToast('Microsoft aún no está cargado, prueba en unos segundos');
     return;
@@ -2647,7 +2593,6 @@ async function oneDriveAuth() {
 function oneDriveDisconnect() {
   localStorage.removeItem(ONEDRIVE_SESSION_KEY);
   oneDriveClient = null;
-  oneDriveClientIdCache = '';
   oneDriveAccount = null;
   oneDriveToken = null;
   oneDriveAppFolderId = null;
@@ -2660,7 +2605,6 @@ function oneDriveDisconnect() {
 }
 
 async function oneDriveTestConnection() {
-  const clientId = getOneDriveClientId();
   const setResult = (msg, state) => {
     const color = state === 'ok' ? 'var(--ok)' : state === 'error' ? 'var(--danger)' : 'var(--accent)';
     ['onedrive-test-result', 'onedrive-test-drive-result'].forEach(id => {
@@ -2668,55 +2612,31 @@ async function oneDriveTestConnection() {
       if (el) { el.textContent = msg; el.style.color = color; }
     });
   };
-
-  if (!clientId) {
-    setResult('⚠ Sin Client ID — configúralo primero', 'error');
-    showToast('Configura el Client ID de OneDrive');
-    return;
-  }
   if (!window.msal || !window.msal.PublicClientApplication) {
     setResult('✗ MSAL no disponible — recarga la página', 'error');
-    showToast('Error interno: MSAL no cargado. Recarga la app.');
     return;
   }
-
-  setResult('⏳ Inicializando cliente MSAL…', 'loading');
+  setResult('⏳ Inicializando…', 'loading');
   try {
-    // Paso 1: token (initOneDriveClient ya llama a initialize())
     const tokenOk = await oneDriveAcquireToken(true);
-    if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener el token de acceso');
+    if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener el token');
     setResult('⏳ Token OK · verificando usuario…', 'loading');
-
-    // Paso 2: usuario
     const userInfo = await oneDriveFetchUser();
-    const userName = userInfo
-      ? (userInfo.mail || userInfo.userPrincipalName || userInfo.displayName || 'usuario OK')
-      : '(sin nombre)';
+    const userName = userInfo ? (userInfo.mail || userInfo.userPrincipalName || userInfo.displayName || 'OK') : '—';
     setResult('⏳ Usuario OK · verificando carpeta…', 'loading');
-
-    // Paso 3: carpeta de la app
     const folderId = await oneDriveEnsureAppFolder();
     if (!folderId) throw new Error('No se pudo acceder a la carpeta de la app');
     setResult('⏳ Carpeta OK · probando escritura…', 'loading');
-
-    // Paso 4: escritura de prueba
-    const testFilename = '_tdd_test_connection.json';
-    await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFilename) + ':/content', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+    const testFile = '_tdd_test_connection.json';
+    await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFile) + ':/content', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ test: true, ts: Date.now() })
     });
-
-    // Paso 5: borrar fichero de prueba
-    try {
-      await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFilename), { method: 'DELETE' });
-    } catch(_) {}
-
+    try { await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFile), { method: 'DELETE' }); } catch(_) {}
     const msg = '✓ Conexión OK · ' + userName;
     setResult(msg, 'ok');
     oneDriveSetConnectedUI(true);
     showToast(msg);
-
   } catch(e) {
     const errMsg = e.message || String(e);
     setResult('✗ ' + errMsg, 'error');
@@ -2836,7 +2756,6 @@ Esta acción no se puede deshacer.`)) return;
 async function oneDriveTryRestore() {
   if (oneDriveRestoreInFlight) return;
   if (!localStorage.getItem(ONEDRIVE_SESSION_KEY)) { oneDriveSetConnectedUI(false); return; }
-  if (!getOneDriveClientId()) { oneDriveSetConnectedUI(false); return; }
   if (!window.msal || !window.msal.PublicClientApplication) return;
   oneDriveRestoreInFlight = true;
   try {
@@ -3053,7 +2972,6 @@ window.addEventListener('DOMContentLoaded', () => {
   load();
   galleryLoadFromStorage();
   updateDriveSaveName();
-  loadOneDriveSettingsUI();
   oneDriveSetConnectedUI(false);
   document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
   render();
