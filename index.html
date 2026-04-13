@@ -596,8 +596,76 @@ body.light .drawer-input { background: var(--bg3); }
 }
 .api-status-badge.set { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(39,174,96,0.3); }
 .api-status-badge.unset { background: var(--bg4); color: var(--text3); }
+
+/* ── CHECKLIST MANAGER ── */
+#cm-overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:3000;display:none;align-items:center;justify-content:center;padding:20px;
+}
+#cm-overlay.open{display:flex;}
+#cm-modal {
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:16px;width:100%;max-width:420px;
+  max-height:85vh;display:flex;flex-direction:column;overflow:hidden;
+}
+.cm-hd{display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px 14px;border-bottom:1px solid var(--border);}
+.cm-hd-title{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);}
+.cm-hd-close{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:2px 8px;}
+.cm-body{flex:1;overflow-y:auto;padding:16px 20px;}
+.cm-lbl{font-family:var(--font-mono);font-size:10px;color:var(--text3);
+  letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;margin-top:16px;}
+.cm-lbl:first-child{margin-top:0;}
+.cm-row{display:flex;gap:8px;margin-bottom:4px;}
+.cm-input{
+  flex:1;padding:11px 13px;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:10px;
+  color:var(--text);font-family:var(--font-body);font-size:14px;
+  outline:none;-webkit-appearance:none;
+}
+.cm-input:focus{border-color:var(--accent);}
+.cm-btn{
+  padding:11px 16px;border-radius:10px;border:none;
+  font-family:var(--font-head);font-size:13px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:opacity 0.15s;
+}
+.cm-btn:active{opacity:0.8;}
+.cm-btn-accent{background:var(--accent);color:var(--bg);}
+.cm-btn-muted{background:var(--bg4);color:var(--text);border:1px solid var(--border2);}
+.cm-list{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.cm-item{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;cursor:pointer;transition:border-color 0.15s;
+}
+.cm-item:active{background:var(--bg4);}
+.cm-item.active{border-color:var(--accent);background:rgba(62,184,240,0.07);}
+.cm-item-info{flex:1;min-width:0;}
+.cm-item-name{font-family:var(--font-body);font-size:13px;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cm-item-meta{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:2px;}
+.cm-item-del{background:none;border:none;color:var(--text3);font-size:15px;
+  cursor:pointer;padding:2px 6px;border-radius:6px;}
+.cm-item-del:active{color:var(--danger);}
+.cm-empty{font-family:var(--font-mono);font-size:11px;color:var(--text3);
+  text-align:center;padding:24px 0;}
+/* Botón gestor en header */
+#btn-checklists {
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:20px;padding:5px 12px;cursor:pointer;
+  font-family:var(--font-mono);font-size:11px;color:var(--text2);
+  white-space:nowrap;overflow:hidden;max-width:180px;
+  transition:border-color 0.2s,color 0.2s;
+}
+#btn-checklists:active{border-color:var(--accent);color:var(--accent);}
+#btn-checklists-name{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  flex:1;min-width:0;
+}
+
 </style>
-<script>/* MSAL Browser 3.30.0 — inline */
+<script>/* MSAL Browser 3.30.0 */
 /*! @azure/msal-browser v3.30.0 2025-08-05 */
 "use strict";!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).msal={})}(this,(function(e){
 /*! @azure/msal-common v14.16.1 2025-08-05 */
@@ -697,6 +765,10 @@ class En{constructor(e,t,r,n,o,i,a,s){this.canonicalAuthority=e,this._canonicalA
 <div id="header">
   <div class="header-top">
     <div class="app-title">TDD Check</div>
+    <button id="btn-checklists" onclick="openCM()">
+      <span>📋</span>
+      <span id="btn-checklists-name">—</span>
+    </button>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="header-meta" id="header-date"></div>
       <button id="theme-toggle" onclick="toggleTheme()" title="Cambiar modo día/noche">
@@ -840,7 +912,7 @@ class En{constructor(e,t,r,n,o,i,a,s){this.canonicalAuthority=e,this._canonicalA
         <span class="drawer-btn-icon">🧪</span>
         <div class="drawer-btn-body">
           <div class="drawer-btn-title">Probar conexión</div>
-          <div class="drawer-btn-sub" id="onedrive-test-drive-result">Comprueba token y carpeta de la app</div>
+          <div class="drawer-btn-sub" id="onedrive-test-drive-result">Comprueba token y carpeta</div>
         </div>
       </button>
       <div style="font-family:var(--font-body);font-size:11px;color:var(--text3);line-height:1.5">
@@ -1217,8 +1289,11 @@ const SECTIONS = [
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const state = { items: {}, notes: {}, photos: {}, gallery: [], sections: {} };
-const PHOTO_KEY = 'tdd_photos_v2';
-const GALLERY_KEY = 'tdd_gallery_v1';
+const PHOTO_KEY       = 'tdd_photos_v2';
+const GALLERY_KEY     = 'tdd_gallery_v1';
+const CL_INDEX_KEY    = 'tdd_checklists_v1';
+const CL_ACTIVE_KEY   = 'tdd_active_cl';
+let activeCLId        = null;
 
 SECTIONS.forEach(s => {
   state.sections[s.id] = true;
@@ -1228,26 +1303,69 @@ SECTIONS.forEach(s => {
 let currentFilter = 'all';
 const STORAGE_KEY = 'tdd_checklist_v2';
 
+// ── MULTI-CHECKLIST STORAGE ──────────────────────────────────────────────────
+function clIndex()            { try{return JSON.parse(localStorage.getItem(CL_INDEX_KEY)||'[]');}catch(e){return[];} }
+function clSaveIndex(list)    { localStorage.setItem(CL_INDEX_KEY, JSON.stringify(list)); }
+function clDataKey(id)        { return 'tdd_cl_d_'+id; }
+function clPhotoKey(id)       { return 'tdd_cl_p_'+id; }
+function clGalleryKey(id)     { return 'tdd_cl_g_'+id; }
+
+function clSetActive(id) {
+  activeCLId = id;
+  localStorage.setItem(CL_ACTIVE_KEY, id);
+  const cl = clIndex().find(c=>c.id===id);
+  const el = document.getElementById('btn-checklists-name');
+  if (el) el.textContent = cl ? cl.name : '—';
+}
+
+function clEnsureDefault() {
+  let list = clIndex();
+  if (list.length === 0) {
+    const id = 'cl_'+Date.now();
+    list = [{ id, name:'Checklist 1', createdAt:new Date().toISOString() }];
+    clSaveIndex(list);
+    // migrar datos legacy
+    const ld = localStorage.getItem(STORAGE_KEY);
+    if (ld) localStorage.setItem(clDataKey(id), ld);
+    const lp = localStorage.getItem(PHOTO_KEY);
+    if (lp) localStorage.setItem(clPhotoKey(id), lp);
+    const lg = localStorage.getItem(GALLERY_KEY);
+    if (lg) localStorage.setItem(clGalleryKey(id), lg);
+  }
+  return list;
+}
+
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items, notes: state.notes }));
+  if (!activeCLId) return;
+  localStorage.setItem(clDataKey(activeCLId), JSON.stringify({items:state.items, notes:state.notes}));
+  try { localStorage.setItem(clPhotoKey(activeCLId), JSON.stringify(state.photos)); }
+  catch(e) { showToast('Almacenamiento lleno. Elimina fotos antiguas.'); }
+  try { localStorage.setItem(clGalleryKey(activeCLId), JSON.stringify(state.gallery)); }
+  catch(e) {}
+}
+
+function clLoadData(id) {
+  SECTIONS.forEach(s=>s.items.forEach(it=>{
+    state.items[it.id]='none'; state.notes[it.id]=''; state.photos[it.id]=[];
+  }));
+  state.gallery=[];
   try {
-    localStorage.setItem(PHOTO_KEY, JSON.stringify(state.photos));
-  } catch(e) { showToast('Almacenamiento lleno. Elimina fotos antiguas.'); }
-  try {
-    localStorage.setItem(GALLERY_KEY, JSON.stringify(state.gallery));
+    const d=JSON.parse(localStorage.getItem(clDataKey(id))||'{}');
+    if(d.items) Object.assign(state.items,d.items);
+    if(d.notes) Object.assign(state.notes,d.notes);
+    const p=JSON.parse(localStorage.getItem(clPhotoKey(id))||'{}');
+    if(p) Object.assign(state.photos,p);
+    const g=JSON.parse(localStorage.getItem(clGalleryKey(id))||'[]');
+    if(Array.isArray(g)) state.gallery=g;
   } catch(e) {}
 }
 
 function load() {
-  try {
-    const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    if (d.items) Object.assign(state.items, d.items);
-    if (d.notes) Object.assign(state.notes, d.notes);
-    const p = JSON.parse(localStorage.getItem(PHOTO_KEY) || '{}');
-    if (p) Object.assign(state.photos, p);
-    const g = JSON.parse(localStorage.getItem(GALLERY_KEY) || '[]');
-    if (Array.isArray(g)) state.gallery = g;
-  } catch(e) {}
+  const list = clEnsureDefault();
+  let id = localStorage.getItem(CL_ACTIVE_KEY);
+  if (!id || !list.find(c=>c.id===id)) id = list[0].id;
+  clSetActive(id);
+  clLoadData(id);
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -1468,13 +1586,13 @@ function expandAll() { SECTIONS.forEach(s => { state.sections[s.id] = true; }); 
 function collapseAll() { SECTIONS.forEach(s => { state.sections[s.id] = false; }); render(); }
 
 function resetAll() {
-  if (!confirm('¿Reiniciar todo el checklist? Se perderán todos los datos y fotos.')) return;
-  SECTIONS.forEach(s => s.items.forEach(it => {
-    state.items[it.id] = 'none';
-    state.notes[it.id] = '';
-    state.photos[it.id] = [];
+  const cl = clIndex().find(c=>c.id===activeCLId);
+  const name = cl ? '"'+cl.name+'"' : 'el checklist actual';
+  if (!confirm('¿Reiniciar '+name+'? Se borrarán todos los datos y fotos.')) return;
+  SECTIONS.forEach(s=>s.items.forEach(it=>{
+    state.items[it.id]='none'; state.notes[it.id]=''; state.photos[it.id]=[];
   }));
-  state.gallery = [];
+  state.gallery=[];
   save(); render();
   showToast('Checklist reiniciado');
 }
@@ -2174,17 +2292,12 @@ function closeDrawer(name) {
 
 // ── SETTINGS — API KEYS ───────────────────────────────────────────────────────
 const API_KEY_STORE = 'tdd_apikeys_v1';
-const ONEDRIVE_CLIENT_ID    = 'ce9ca9ed-e161-4752-bb7a-3fcc17ae5575';
-const ONEDRIVE_SESSION_KEY  = 'tdd_onedrive_session_v1';
+const ONEDRIVE_CLIENT_ID   = 'ce9ca9ed-e161-4752-bb7a-3fcc17ae5575';
+const ONEDRIVE_SESSION_KEY = 'tdd_onedrive_session_v1';
 let currentApiTab = 'claude';
 
-function getOneDriveClientId() {
-  return ONEDRIVE_CLIENT_ID;
-}
-
-function loadOneDriveSettingsUI() {
-  // Client ID embebido — sin configuración manual necesaria
-}
+function getOneDriveClientId() { return ONEDRIVE_CLIENT_ID; }
+function loadOneDriveSettingsUI() {}
 
 function setApiTab(tab, btn) {
   currentApiTab = tab;
@@ -2486,9 +2599,7 @@ async function initOneDriveClient() {
       cache: { cacheLocation: 'localStorage' }
     });
     await oneDriveClient.initialize();
-    oneDriveAccount = null;
-    oneDriveToken = null;
-    oneDriveAppFolderId = null;
+    oneDriveAccount = null; oneDriveToken = null; oneDriveAppFolderId = null;
   }
   return oneDriveClient;
 }
@@ -2592,56 +2703,44 @@ async function oneDriveAuth() {
 
 function oneDriveDisconnect() {
   localStorage.removeItem(ONEDRIVE_SESSION_KEY);
-  oneDriveClient = null;
-  oneDriveAccount = null;
-  oneDriveToken = null;
-  oneDriveAppFolderId = null;
-  const list = document.getElementById('onedrive-copies-list');
-  if (list) list.innerHTML = '<div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Pulsa actualizar para cargar copias</div>';
-  const count = document.getElementById('onedrive-copies-count');
-  if (count) count.textContent = '';
+  oneDriveClient=null; oneDriveAccount=null; oneDriveToken=null; oneDriveAppFolderId=null;
+  const list=document.getElementById('onedrive-copies-list');
+  if(list) list.innerHTML='<div style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--text3)">Pulsa actualizar para cargar copias</div>';
+  const count=document.getElementById('onedrive-copies-count');
+  if(count) count.textContent='';
   oneDriveSetConnectedUI(false);
   showToast('OneDrive desconectado en la app');
 }
 
 async function oneDriveTestConnection() {
-  const setResult = (msg, state) => {
-    const color = state === 'ok' ? 'var(--ok)' : state === 'error' ? 'var(--danger)' : 'var(--accent)';
-    ['onedrive-test-result', 'onedrive-test-drive-result'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.textContent = msg; el.style.color = color; }
+  const setR=(msg,st)=>{
+    const c=st==='ok'?'var(--ok)':st==='error'?'var(--danger)':'var(--accent)';
+    ['onedrive-test-result','onedrive-test-drive-result'].forEach(id=>{
+      const el=document.getElementById(id); if(el){el.textContent=msg;el.style.color=c;}
     });
   };
-  if (!window.msal || !window.msal.PublicClientApplication) {
-    setResult('✗ MSAL no disponible — recarga la página', 'error');
-    return;
-  }
-  setResult('⏳ Inicializando…', 'loading');
+  if(!window.msal||!window.msal.PublicClientApplication){setR('✗ MSAL no disponible — recarga','error');return;}
+  setR('⏳ Inicializando…','loading');
   try {
-    const tokenOk = await oneDriveAcquireToken(true);
-    if (!tokenOk || !oneDriveToken) throw new Error('No se pudo obtener el token');
-    setResult('⏳ Token OK · verificando usuario…', 'loading');
-    const userInfo = await oneDriveFetchUser();
-    const userName = userInfo ? (userInfo.mail || userInfo.userPrincipalName || userInfo.displayName || 'OK') : '—';
-    setResult('⏳ Usuario OK · verificando carpeta…', 'loading');
-    const folderId = await oneDriveEnsureAppFolder();
-    if (!folderId) throw new Error('No se pudo acceder a la carpeta de la app');
-    setResult('⏳ Carpeta OK · probando escritura…', 'loading');
-    const testFile = '_tdd_test_connection.json';
-    await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFile) + ':/content', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test: true, ts: Date.now() })
-    });
-    try { await oneDriveGraph('/me/drive/special/approot:/' + encodeURIComponent(testFile), { method: 'DELETE' }); } catch(_) {}
-    const msg = '✓ Conexión OK · ' + userName;
-    setResult(msg, 'ok');
-    oneDriveSetConnectedUI(true);
-    showToast(msg);
+    const ok=await oneDriveAcquireToken(true);
+    if(!ok||!oneDriveToken) throw new Error('No se pudo obtener el token');
+    setR('⏳ Token OK · verificando usuario…','loading');
+    const ui=await oneDriveFetchUser();
+    const un=ui?(ui.mail||ui.userPrincipalName||ui.displayName||'OK'):'—';
+    setR('⏳ Usuario OK · verificando carpeta…','loading');
+    const fi=await oneDriveEnsureAppFolder();
+    if(!fi) throw new Error('No se pudo acceder a la carpeta');
+    setR('⏳ Carpeta OK · probando escritura…','loading');
+    const tf='_tdd_test.json';
+    await oneDriveGraph('/me/drive/special/approot:/'+encodeURIComponent(tf)+':/content',
+      {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({test:true,ts:Date.now()})});
+    try{await oneDriveGraph('/me/drive/special/approot:/'+encodeURIComponent(tf),{method:'DELETE'});}catch(_){}
+    const msg='✓ Conexión OK · '+un;
+    setR(msg,'ok'); oneDriveSetConnectedUI(true); showToast(msg);
   } catch(e) {
-    const errMsg = e.message || String(e);
-    setResult('✗ ' + errMsg, 'error');
-    showToast('OneDrive: ' + errMsg);
-    oneDriveSetStatus('disconnected', 'Error al probar conexión');
+    setR('✗ '+(e.message||e),'error');
+    showToast('OneDrive: '+(e.message||e));
+    oneDriveSetStatus('disconnected','Error al probar conexión');
   }
 }
 
@@ -2965,6 +3064,91 @@ function closeGalleryLightbox() {
   _galleryEditingIdx = null;
 }
 
+
+// ── CHECKLIST MANAGER UI ──────────────────────────────────────────────────────
+function openCM() {
+  const list = clIndex();
+  const cm = document.getElementById('cm-rename');
+  if (cm) { const cl=list.find(c=>c.id===activeCLId); cm.value=cl?cl.name:''; }
+  cmRenderList();
+  document.getElementById('cm-overlay').classList.add('open');
+}
+function closeCM() { document.getElementById('cm-overlay').classList.remove('open'); }
+
+function cmRenderList() {
+  const list = clIndex();
+  const el = document.getElementById('cm-list');
+  if (!el) return;
+  if (!list.length) { el.innerHTML='<div class="cm-empty">No hay checklists guardados</div>'; return; }
+  el.innerHTML = list.map(cl => {
+    const active = cl.id === activeCLId;
+    const d = cl.createdAt ? new Date(cl.createdAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    return `<div class="cm-item${active?' active':''}" onclick="cmOpen('${cl.id}')">
+      <div class="cm-item-info">
+        <div class="cm-item-name">${cl.name}</div>
+        <div class="cm-item-meta">${d}${active?' · activo':''}</div>
+      </div>
+      ${active?'':`<button class="cm-item-del" onclick="event.stopPropagation();cmDelete('${cl.id}')">✕</button>`}
+    </div>`;
+  }).join('');
+}
+
+function cmCreate() {
+  const inp = document.getElementById('cm-new-name');
+  const name = inp ? inp.value.trim() : '';
+  if (!name) { showToast('Escribe un nombre'); return; }
+  save();
+  const id = 'cl_'+Date.now();
+  const list = clIndex();
+  list.push({ id, name, createdAt:new Date().toISOString() });
+  clSaveIndex(list);
+  clSetActive(id);
+  clLoadData(id);  // nuevo = vacío
+  render(); updateStats();
+  if (inp) inp.value = '';
+  cmRenderList();
+  showToast('Creado: '+name);
+}
+
+function cmOpen(id) {
+  if (id === activeCLId) { closeCM(); return; }
+  save();
+  clSetActive(id);
+  clLoadData(id);
+  render(); updateStats();
+  closeCM();
+  const cl = clIndex().find(c=>c.id===id);
+  showToast('Abierto: '+(cl?cl.name:id));
+}
+
+function cmRename() {
+  const inp = document.getElementById('cm-rename');
+  const name = inp ? inp.value.trim() : '';
+  if (!name) { showToast('Escribe el nuevo nombre'); return; }
+  const list = clIndex();
+  const cl = list.find(c=>c.id===activeCLId);
+  if (!cl) return;
+  cl.name = name;
+  clSaveIndex(list);
+  const el = document.getElementById('btn-checklists-name');
+  if (el) el.textContent = name;
+  cmRenderList();
+  showToast('Renombrado a "'+name+'"');
+}
+
+function cmDelete(id) {
+  const list = clIndex();
+  const cl = list.find(c=>c.id===id);
+  if (!cl) return;
+  if (!confirm('¿Eliminar "'+cl.name+'"? Se borrarán todos sus datos.')) return;
+  localStorage.removeItem(clDataKey(id));
+  localStorage.removeItem(clPhotoKey(id));
+  localStorage.removeItem(clGalleryKey(id));
+  clSaveIndex(list.filter(c=>c.id!==id));
+  cmRenderList();
+  showToast('"'+cl.name+'" eliminado');
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadTheme();
@@ -2987,5 +3171,32 @@ window.addEventListener('load', () => {
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(err=>console.error("SW registration failed:",err))})}</script>
+
+<!-- ══ CHECKLIST MANAGER MODAL ══ -->
+<div id="cm-overlay" onclick="if(event.target===this)closeCM()">
+  <div id="cm-modal">
+    <div class="cm-hd">
+      <div class="cm-hd-title">📋 Gestión de checklists</div>
+      <button class="cm-hd-close" onclick="closeCM()">✕</button>
+    </div>
+    <div class="cm-body">
+      <div class="cm-lbl">Nuevo checklist</div>
+      <div class="cm-row">
+        <input class="cm-input" id="cm-new-name" placeholder="Nombre de instalación…" maxlength="60"
+          onkeydown="if(event.key==='Enter')cmCreate()">
+        <button class="cm-btn cm-btn-accent" onclick="cmCreate()">Crear</button>
+      </div>
+      <div class="cm-lbl">Renombrar checklist actual</div>
+      <div class="cm-row">
+        <input class="cm-input" id="cm-rename" placeholder="Nuevo nombre…" maxlength="60"
+          onkeydown="if(event.key==='Enter')cmRename()">
+        <button class="cm-btn cm-btn-muted" onclick="cmRename()">Guardar</button>
+      </div>
+      <div class="cm-lbl">Checklists guardados</div>
+      <div class="cm-list" id="cm-list"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
